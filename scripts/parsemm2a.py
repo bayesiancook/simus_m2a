@@ -31,10 +31,28 @@ def parse_list(chain_name, burnin, path = "", min_omega = 1.0) :
     # print("number of genes : " , ngene)
     totnsite = sum([gene_nsite[gene] for gene in gene_nsite])
 
+    # open chain file and get hyperparams
+    with open(chain_name + ".chain", 'r') as chain_file:
+        # header = chain_file.readline()
+        for i in range(burnin):
+            line = chain_file.readline()
+
+        mcmc = [line.rstrip('\n').split()[0:9] for line in chain_file]
+
+        hyperparams = list()
+        for i in range(9):
+            sorted_sample = sorted([float(s[i]) for s in mcmc])
+            post_mean = mean(sorted_sample)
+            size = len(sorted_sample)
+            minindex = int(0.025 * size)
+            maxindex = int(0.975 * size)
+            post_min = sorted_sample[minindex]
+            post_max = sorted_sample[maxindex]
+            hyperparams.append((post_mean, post_min, post_max))
+
     # open posom and posw files 
     with open(chain_name + ".posw", 'r') as posw_file:
         # header = posw_file.readline()
-
         for i in range(burnin):
             line = posw_file.readline()
 
@@ -141,7 +159,7 @@ def parse_list(chain_name, burnin, path = "", min_omega = 1.0) :
     if path != "":
         os.chdir(current_dir)
 
-    return [gene_postselprob, gene_meanposw, gene_meanposom, gene_minposom, gene_maxposom, gene_selectedsites, gene_sitepp, gene_postselprob2, gene_postselprob3]
+    return [gene_postselprob, gene_meanposw, gene_meanposom, gene_minposom, gene_maxposom, gene_selectedsites, gene_sitepp, gene_postselprob2, gene_postselprob3, hyperparams]
 
 if __name__ == "__main__":
 

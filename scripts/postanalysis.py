@@ -145,6 +145,7 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
     maxposom = dict()
     selectedsites = dict()
     sitepp = dict()
+    hyperparams = dict()
 
     namelist = []
 
@@ -163,7 +164,7 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
     # parsing mm2a results
     for name in multi_basename:
         multi_res = parsemm2a.parse_list(name, int(burnin), path=multi_dir)
-        [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name], score2[name], score3[name]] = multi_res[0:9]
+        [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name], score2[name], score3[name], hyperparams[name]] = multi_res[0:10]
         namelist.append(name)
 
     codeml_dlnl = score["codeml"]
@@ -285,6 +286,34 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
                         if name != "codeml":
                             siteoutfile.write("\t{0}".format(sitepp[name][gene][i]))
                     siteoutfile.write("\n")
+
+
+    hypernamelist = ['purom_mean', 'purom_invconc', 'dposom_mean', 'dposom_invshape', 'purw_mean', 'purw_invconc', 'posw_mean', 'posw_invconc', 'pi']
+
+    with open(outname + ".hyper", 'w') as outfile:
+
+        # posterior mean and credible interval for hyperparams of multigene runs
+        outfile.write("{0:20s}".format("param"))
+        for name in hyperparams:
+            outfile.write("\t{0:^24s}".format(name))
+        outfile.write('\n')
+        for i,name in enumerate(hypernamelist):
+            outfile.write("{0:20s}".format(name))
+            for name in hyperparams:
+                (mean,min,max) = hyperparams[name][i]
+                outfile.write("\t{0:6.4f} ({1:6.4f} , {2:6.4f})".format(mean,min,max))
+            outfile.write('\n')
+
+        outfile.write('\n')
+
+        # mean and stdev of distribution of true versus post mean estimates for the 4 key parameters
+        outfile.write("{0:10s}\t{1:^6s}\t{2:^6s}\t{3:^6s}\t{4:^6s}\t{5:^6s}\n".format("method", "pi", "posw", "stdev", "posom", "stedv"))
+        if fromsimu:
+            outfile.write("{0:10s}\t{1:6.4f}\t{2:6.4f}\t{3:6.4f}\t{4:6.4f}\t{5:6.4f}\n".format("simu", pi, posw_mean, numpy.sqrt(posw_var), 1.0 + dposom_mean, numpy.sqrt(dposom_var)))
+
+        for name in namelist:
+            (est_pi, est_purw_mean, est_purw_var, est_purw_invconc, est_posw_mean, est_posw_var, est_posw_invconc, est_purom_mean, est_purom_var, est_purom_invconc, est_posom_mean, est_posom_var, est_posom_invshape) = simuparams.get_empirical_hyperparams(posw[name], posw[name], posom[name], posom[name])
+            outfile.write("{0:10s}\t{1:6.4f}\t{2:6.4f}\t{3:6.4f}\t{4:6.4f}\t{5:6.4f}\n".format(name, est_pi, est_posw_mean, numpy.sqrt(est_posw_var), est_posom_mean, numpy.sqrt(est_posom_var)))
 
 
     if fromsimu:
