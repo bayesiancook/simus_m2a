@@ -3,16 +3,23 @@
 import postpredsimu
 import sys
 
+# original subexperiment on which to do the post pred simulation should 
 exp_folder = sys.argv[1]
-listname = sys.argv[2]
-lnl_min = float(sys.argv[3])
-shrink_posw = float(sys.argv[4])
-shrink_dposom = float(sys.argv[5])
-# lnl_max = float(sys.argv[4])
-target_name = sys.argv[6]
-
+# simulation based on uninfm2a chains in singlegene folder
 basename = "uninfm2a"
 
-postpredsimu.single_gene_postpred(exp_folder, listname, basename, target_name, lnl_min = lnl_min, shrink_posw = shrink_posw, shrink_dposom = shrink_dposom, burnin=50)
-# postpredsimu.single_gene_postpred(exp_folder, listname, basename, target_name, lnl_min = lnl_min, lnl_max = lnl_max, burnin=50)
+# list of genes in decreasing order of delta lnL (codeml)
+listname = sys.argv[2]
+
+# target proportion of genes simulated under positive selection
+prop_pos = float(sys.argv[3])
+
+# shrinking posw and dposom
+shrink_posw = float(sys.argv[4])
+shrink_dposom = float(sys.argv[5])
+
+# name of target directory
+target_name = sys.argv[6]
+
+postpredsimu.single_gene_postpred(exp_folder, listname, basename, target_name, prop_pos = prop_pos, shrink_posw = shrink_posw, shrink_dposom = shrink_dposom, prob_posw = 1.0, prob_dposom = 1.0, burnin=100)
 
