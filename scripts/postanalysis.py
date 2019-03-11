@@ -7,6 +7,30 @@ import parsecodeml
 import parsem2a
 import parsemm2a
 import simuparams
+from scipy.stats import chi2
+
+def gene_codeml_tdr(score, trueposw, outname):
+
+    ngene = len(trueposw)
+    print(ngene)
+
+    with open(outname + ".genetdr_codeml", 'w') as outfile:
+        etdr = 0
+        tdr = 0
+        n = 0
+        for (gene,dlnl) in sorted(score.items(), key=lambda kv: kv[1], reverse=True):
+
+            if dlnl>0:
+                n = n + 1
+                pval = (1 - chi2.cdf(2*dlnl,1))/2
+                efdr = ngene*pval/n
+                etdr = 1 - ngene*pval/n
+                if trueposw[gene] > 0:
+                    tdr = tdr + 1
+                fdr = n - tdr
+                    
+                outfile.write("{0:15s}\t{1:5.2f}\t{2:7.5f}\t{3:7.5f}\t{4:7.5f}\n".format(gene,dlnl,pval,efdr,fdr/n))
+                #outfile.write("{0:15s}\t{1:5.2f}\t{2:7.5f}\t{3:7.5f}\t{4:7.5f}\n".format(gene,dlnl,pval,etdr,tdr/n))
 
 def gene_tdr(cutoff_list, namelist, score, trueposw, outname):
 
@@ -317,6 +341,8 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
 
 
     if fromsimu:
+
+        gene_codeml_tdr(score["codeml"], trueposw, outname)
 
         cutoff_list = [0.5, 0.6, 0.7, 0.8, 0.9]
 
