@@ -3,9 +3,11 @@ import os
 import re
 import runmm2a
 import datalib
+from numpy import random
 
-def single_gene_postpred(exp_folder, listname, basename, target_folder, lnl_min = -1.0, lnl_max = 0.0, burnin = 10, every = 10, shrink_posw = 1.0, shrink_dposom = 1.0, nrep = 1):
+def single_gene_postpred(exp_folder, listname, basename, target_folder, prop_pos = 0.20, shrink_posw = 1.0, shrink_dposom = 1.0, prob_posw = 0, prob_dposom = 0, burnin = 10, every = 10):
 
+    nrep = 1
     until = burnin + nrep * every + 1
     rep = 0
 
@@ -41,7 +43,11 @@ def single_gene_postpred(exp_folder, listname, basename, target_folder, lnl_min 
             gene2lnl = line.rstrip('\n').split()[0:2]
             genelist[gene2lnl[0]] = float(gene2lnl[1])
 
+    ngene = len(genelist)
+    ngene_pos = int(ngene * prop_pos)
+
     # make ppred simulations for all genes
+    gene_index = 0
     for (gene,lnl) in sorted(genelist.items(), key=lambda kv: kv[1], reverse=True):
 
         # check trees are there
@@ -51,9 +57,17 @@ def single_gene_postpred(exp_folder, listname, basename, target_folder, lnl_min 
         os.system("cp " + single_dir + gene + ".tree " + simu_dir)
 
         # readcodonm2a with ppred option
-        ppred_command = "readcodonm2a -x {0} {1} {2} -ppred -shrinkposw {3} -shrinkdposom {4} {5}{6}".format(burnin, every, until, shrink_posw, shrink_dposom, basename, gene)
-        if ((lnl_max > 0) and (lnl > lnl_max)) or (lnl < lnl_min):
-            ppred_command = "readcodonm2a -x {0} {1} {2} -ppred -null {3}{4}".format(burnin,every,until,basename,gene)
+        gene_index = gene_index + 1
+        ppred_command = "readcodonm2a -x {0} {1} {2} -ppred -null {3}{4}".format(burnin,every,until,basename,gene)
+        if gene_index <= ngene_pos:
+            sposw = 1.0
+            if random.random() < prob_posw:
+                sposw = shrink_posw
+            sdposom = 1.0
+            if random.random() < prob_dposom:
+                sdposom = shrink_dposom
+
+            ppred_command = "readcodonm2a -x {0} {1} {2} -ppred -shrinkposw {3} -shrinkdposom {4} {5}{6}".format(burnin, every, until, sposw, sdposom, basename, gene)
 
         # execute ppred and move resulting files in simu folder
         os.chdir(single_dir)
