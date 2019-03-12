@@ -26,14 +26,17 @@ if os.path.exists(target_dir):
 os.system("mkdir " + target_dir)
 
 # get target taxon list
+print("get taxon list", taxfile_name)
 with open(taxfile_name, 'r') as taxfile:
     target_taxlist = [taxon.rstrip('\n') for taxon in taxfile]
 
+print ("get gene list", listname)
 # get gene list
 with open(listname, 'r') as listfile:
     genelist = [gene.rstrip('\n').replace(".ali","") for gene in listfile]
 
 all_missing = re.compile(r"^\?+$")
+genus_name = re.compile(r"^([A-z][a-z]*)\_.*$")
 
 selection = []
 
@@ -45,19 +48,30 @@ for gene in genelist:
         ali = dict()
         for line in genefile:
             entry = line.rstrip('\n').split()
-            if not all_missing.match(entry[1]) and entry[0] in target_taxlist:
-                ali[entry[0]] = entry[1]
+            m = re.match(r"^([A-Z][a-z]*)_.*$", entry[0])
+            if not m:
+                print("error: taxon name does not match pattern")
+                print(entry[0])
+                sys.exit()
+
+            genus_name = m.group(1)
+
+            if not all_missing.match(entry[1]) and genus_name in target_taxlist:
+                ali[genus_name] = entry[1]
 
         gene_taxlist = [taxon for taxon in ali]
         gene_ntaxa = len(gene_taxlist)
         gene_nsite = int(nsite)
 
-        m = re.match(r".*_(ENSG\d+)_.*",gene) 
+        m = re.match(r".*(ENSG\d+)_.*",gene) 
         if not m:
             print("error: gene does not match pattern")
             print(gene)
-            raise
+            sys.exit()
+
         gene_short_name = m.group(1)
+
+        print(gene_short_name, gene_ntaxa, gene_nsite)
 
         if gene_ntaxa >= min_ntaxa and gene_nsite >= min_nsite and gene_nsite <= max_nsite:
             # os.system("cp " + data_dir + gene + ".ali " + target_dir + "all" + gene_short_name + ".ali")
@@ -66,6 +80,8 @@ for gene in genelist:
                 alifile.write("{0} {1}\n".format(gene_ntaxa, gene_nsite))
                 for (taxon,seq) in ali.items():
                     alifile.write("{0}  {1}\n".format(taxon,seq))
+
+print("gene selection", len(selection))
 
 with open(target_dir + "all.list", 'w') as listfile:
     for gene in selection:
