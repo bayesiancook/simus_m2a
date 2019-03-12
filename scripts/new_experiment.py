@@ -8,7 +8,6 @@ from datalib import *
 def new_experiment(data_folder, gene_file, taxon_file, tree_file, exp_folder):
 
     data_dir = data_folder + "/"
-    # exp_folder = os.getcwd()
     exp_dir = exp_folder + "/"
     target_folder = exp_dir + "empirical"
     target_dir = target_folder + "/"
@@ -17,8 +16,8 @@ def new_experiment(data_folder, gene_file, taxon_file, tree_file, exp_folder):
         print("data folder does not exist")
         raise
 
-    if not os.path.exists(exp_folder):
-        print("experiment folder does not exist")
+    if os.path.exists(exp_folder):
+        print("experiment folder already exists")
         raise
 
     # get list of genes
@@ -34,7 +33,7 @@ def new_experiment(data_folder, gene_file, taxon_file, tree_file, exp_folder):
         print("number of taxa: {0}".format(ntaxa))
 
     # make target folder and data subfolder
-    # os.system("mkdir " + exp_folder)
+    os.system("mkdir " + exp_folder)
     os.system("mkdir " + target_folder)
     os.system("mkdir " + target_dir + "data")
 
