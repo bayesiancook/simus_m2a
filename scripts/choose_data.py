@@ -60,7 +60,7 @@ for gene in genelist:
         gene_short_name = m.group(1)
 
         if gene_ntaxa >= min_ntaxa and gene_nsite >= min_nsite and gene_nsite <= max_nsite:
-            os.system("cp " + data_dir + gene + ".ali " + target_dir + "all" + gene_short_name + ".ali")
+            # os.system("cp " + data_dir + gene + ".ali " + target_dir + "all" + gene_short_name + ".ali")
             selection.append(gene_short_name)
             with open(target_dir + gene_short_name + ".ali", 'w') as alifile:
                 alifile.write("{0} {1}\n".format(gene_ntaxa, gene_nsite))
