@@ -335,10 +335,9 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
         if fromsimu:
             outfile.write("{0:10s}\t{1:6.4f}\t{2:6.4f}\t{3:6.4f}\t{4:6.4f}\t{5:6.4f}\n".format("simu", pi, posw_mean, numpy.sqrt(posw_var), 1.0 + dposom_mean, numpy.sqrt(dposom_var)))
 
-        for name in namelist:
-            (est_pi, est_purw_mean, est_purw_var, est_purw_invconc, est_posw_mean, est_posw_var, est_posw_invconc, est_purom_mean, est_purom_var, est_purom_invconc, est_posom_mean, est_posom_var, est_posom_invshape) = simuparams.get_empirical_hyperparams(posw[name], posw[name], posom[name], posom[name])
-            outfile.write("{0:10s}\t{1:6.4f}\t{2:6.4f}\t{3:6.4f}\t{4:6.4f}\t{5:6.4f}\n".format(name, est_pi, est_posw_mean, numpy.sqrt(est_posw_var), est_posom_mean, numpy.sqrt(est_posom_var)))
-
+        #for name in namelist:
+        #    (est_pi, est_purw_mean, est_purw_var, est_purw_invconc, est_posw_mean, est_posw_var, est_posw_invconc, est_purom_mean, est_purom_var, est_purom_invconc, est_posom_mean, est_posom_var, est_posom_invshape) = simuparams.get_empirical_hyperparams(posw[name], posw[name], posom[name], posom[name])
+        #    outfile.write("{0:10s}\t{1:6.4f}\t{2:6.4f}\t{3:6.4f}\t{4:6.4f}\t{5:6.4f}\n".format(name, est_pi, est_posw_mean, numpy.sqrt(est_posw_var), est_posom_mean, numpy.sqrt(est_posom_var)))
 
     if fromsimu:
 
