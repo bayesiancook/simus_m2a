@@ -10,7 +10,7 @@ def new_experiment(data_folder, gene_file, taxon_file, tree_file, exp_folder):
     data_dir = data_folder + "/"
     # exp_folder = os.getcwd()
     exp_dir = exp_folder + "/"
-    target_folder = exp_dir + "original_data"
+    target_folder = exp_dir + "empirical"
     target_dir = target_folder + "/"
 
     if not os.path.exists(data_folder):
