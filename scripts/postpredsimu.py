@@ -70,9 +70,10 @@ def single_gene_postpred(exp_folder, listname, basename, target_folder, prop_pos
             ppred_command = "readcodonm2a -x {0} {1} {2} -ppred -shrinkposw {3} -shrinkdposom {4} {5}{6}".format(burnin, every, until, sposw, sdposom, basename, gene)
 
         # execute ppred and move resulting files in simu folder
+        cwd = os.getcwd()
         os.chdir(single_dir)
         os.system(ppred_command)
-        os.chdir("../../")
+        os.chdir(cwd)
         os.system("mv {0}ppred{1}{2}_{3}.ali {4}{2}.ali".format(single_dir, basename, gene, rep, simu_dir))
         os.system("mv {0}ppred{1}{2}_{3}.trueparam {4}{2}.trueparam".format(single_dir, basename, gene, rep, simu_dir))
         os.system("mv {0}ppred{1}{2}_{3}.truesiteom {4}{2}.truesiteom".format(single_dir, basename, gene, rep, simu_dir))
