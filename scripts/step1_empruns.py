@@ -46,18 +46,27 @@ uninfm2a_options= "-x 1 600 -pi 1.0 -purom 0.5 0.5 -dposom 10 1 -purw 0.5 0.5 -p
 uninfpi50m2a_options= "-x 1 600 -pi 0.50 -purom 0.5 0.5 -dposom 10 1 -purw 0.5 0.5 -posw 0.5 0.5"
 uninfpi10m2a_options= "-x 1 600 -pi 0.10 -purom 0.5 0.5 -dposom 10 1 -purw 0.5 0.5 -posw 0.5 0.5"
 uninfpi02m2a_options= "-x 1 600 -pi 0.02 -purom 0.5 0.5 -dposom 10 1 -purw 0.5 0.5 -posw 0.5 0.5"
-subjpi10m2a_options= "-x 1 600 -pi 0.1 -purom 0.5 0.5 -dposom 2 1 -purw 0.5 0.5 -posw 0.1 0.1"
+subjpi50m2a_options= "-x 1 600 -pi 0.50 -purom 0.5 0.5 -dposom 2 1 -purw 0.5 0.5 -posw 0.1 0.1"
+subjpi10m2a_options= "-x 1 600 -pi 0.10 -purom 0.5 0.5 -dposom 2 1 -purw 0.5 0.5 -posw 0.1 0.1"
+subjpi02m2a_options= "-x 1 600 -pi 0.02 -purom 0.5 0.5 -dposom 2 1 -purw 0.5 0.5 -posw 0.1 0.1"
 
 runm2a(emp_folder, uninfm2a_options, "uninfm2a", machine="occigen", queue="none", core = 24, njobs_per_batch = 24, time = 6, mem=16, path2batch = emp_folder + "/singlegene/", path2run = path2bayescode_occigen)
 runm2a(emp_folder, uninfpi50m2a_options, "uninfpi50m2a", machine="occigen", queue="none", core = 24, njobs_per_batch = 24, time = 6, mem=16, path2batch = emp_folder + "/singlegene/", path2run = path2bayescode_occigen)
 runm2a(emp_folder, uninfpi10m2a_options, "uninfpi10m2a", machine="occigen", queue="none", core = 24, njobs_per_batch = 24, time = 6, mem=16, path2batch = emp_folder + "/singlegene/", path2run = path2bayescode_occigen)
 runm2a(emp_folder, uninfpi02m2a_options, "uninfpi02m2a", machine="occigen", queue="none", core = 24, njobs_per_batch = 24, time = 6, mem=16, path2batch = emp_folder + "/singlegene/", path2run = path2bayescode_occigen)
+runm2a(emp_folder, subjpi50m2a_options, "subjpi50m2a", machine="occigen", queue="none", core = 24, njobs_per_batch = 24, time = 6, mem=16, path2batch = emp_folder + "/singlegene/", path2run = path2bayescode_occigen)
 runm2a(emp_folder, subjpi10m2a_options, "subjpi10m2a", machine="occigen", queue="none", core = 24, njobs_per_batch = 24, time = 6, mem=16, path2batch = emp_folder + "/singlegene/", path2run = path2bayescode_occigen)
+runm2a(emp_folder, subjpi02m2a_options, "subjpi02m2a", machine="occigen", queue="none", core = 24, njobs_per_batch = 24, time = 6, mem=16, path2batch = emp_folder + "/singlegene/", path2run = path2bayescode_occigen)
 
 # multi gene bayescode
 sharedmm2a_options= "-x 1 1100 -nucrates shared -bl shared +G"
 shrunkenmm2a_options= "-x 1 1100 -nucrates shrunken -bl shrunken +G"
 indmm2a_options= "-x 1 1100 -nucrates ind -bl ind +G"
+
+unconsshrunkenmm2a_options= "-x 1 1100 -nucrates shrunken -bl shrunken +G -unconsprior"
+unconsindmm2a_options= "-x 1 1100 -nucrates ind -bl ind +G -unconsprior"
+uninfshrunkenmm2a_options= "-x 1 1100 -pi 0.5 0.5 -nucrates shrunken -bl shrunken +G -unconsprior"
+uninfindmm2a_options= "-x 1 1100 -pi 0.5 0.5 -nucrates ind -bl ind +G -unconsprior"
 
 core = 24
 nodes = ngene // core // 5
@@ -65,6 +74,12 @@ nodes = ngene // core // 5
 runmm2a(emp_folder, sharedmm2a_options, "sharedmm2a", machine="occigen", queue="none", nodes=nodes, core=core, time=24, mem=16, path2batch = emp_folder + "/multigene/", path2run = path2bayescode_occigen)
 runmm2a(emp_folder, shrunkenmm2a_options, "shrunkenmm2a", machine="occigen", queue="none", nodes=nodes, core=core, time=24, mem=16, path2batch = emp_folder + "/multigene/", path2run = path2bayescode_occigen)
 runmm2a(emp_folder, indmm2a_options, "indmm2a", machine="occigen", queue="none", nodes=nodes, core=core, time=24, mem=16, path2batch = emp_folder + "/multigene/", path2run = path2bayescode_occigen)
+
+runmm2a(emp_folder, unconsshrunkenmm2a_options, "unconsshrunkenmm2a", machine="occigen", queue="none", nodes=nodes, core=core, time=24, mem=16, path2batch = emp_folder + "/multigene/", path2run = path2bayescode_occigen)
+runmm2a(emp_folder, unconsindmm2a_options, "unconsindmm2a", machine="occigen", queue="none", nodes=nodes, core=core, time=24, mem=16, path2batch = emp_folder + "/multigene/", path2run = path2bayescode_occigen)
+
+runmm2a(emp_folder, uninfshrunkenmm2a_options, "uninfshrunkenmm2a", machine="occigen", queue="none", nodes=nodes, core=core, time=24, mem=16, path2batch = emp_folder + "/multigene/", path2run = path2bayescode_occigen)
+runmm2a(emp_folder, uninfindmm2a_options, "uninfindmm2a", machine="occigen", queue="none", nodes=nodes, core=core, time=24, mem=16, path2batch = emp_folder + "/multigene/", path2run = path2bayescode_occigen)
 
 # multigene post pred bash scripts (prepare them already at that step)
 

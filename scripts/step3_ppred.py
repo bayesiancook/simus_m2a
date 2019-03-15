@@ -23,9 +23,6 @@ single_gene_postpred(emp_folder, postlist_name, "uninfm2a", exp_dir + "simu30_sh
 single_gene_postpred(emp_folder, postlist_name, "uninfm2a", exp_dir + "simu30_shrink_posw03", prop_pos = 0.30, burnin=100, shrink_posw = 0.3, shrink_dposom = 1.0, prob_posw = 1.0, prob_dposom = 1.0)
 single_gene_postpred(emp_folder, postlist_name, "uninfm2a", exp_dir + "simu30_shrink_posw01", prop_pos = 0.30, burnin=100, shrink_posw = 0.1, shrink_dposom = 1.0, prob_posw = 1.0, prob_dposom = 1.0)
 
-# single_gene_postpred(emp_folder, postlist_name, "uninfm2a", exp_dir + "simu00", prop_pos = 0.00, burnin=100, shrink_posw = 1.0, shrink_dposom = 1.0, prob_posw = 1.0, prob_dposom = 1.0)
-# single_gene_postpred(emp_folder, postlist_name, "uninfm2a", exp_dir + "simu30_shrink_both01", prop_pos = 0.30, burnin=100, shrink_posw = 0.1, shrink_dposom = 0.1, prob_posw = 1.0, prob_dposom = 1.0)
-
 # multi gene post pred: post pred itself already done (scripts written at step 1, should be launched after multigene runs are complete)
 # this only formats the output
 # simulating under hard or soft shrinkage
@@ -36,9 +33,10 @@ multi_gene_postpred(emp_folder, "shrunkenmm2a", exp_dir + "simushrunken")
 # prepare subexperiment folders
 
 for simu in ["simu30", "simu10", "simu03"]:
-    prepare_subexperiment(exp_dir + simu, prep_single = True)
+    # prepare_subexperiment(exp_dir + simu, prep_single = True)
+    prepare_subexperiment(exp_dir + simu, prep_single = False)
 
-for simu in ["simu03", "simu30_shrink_dposom03", "simu30_shrink_dposom01", "simu30_shrink_posw03", "simu30_shrink_posw01"]:
+for simu in ["simu30_shrink_dposom03", "simu30_shrink_dposom01", "simu30_shrink_posw03", "simu30_shrink_posw01"]:
     prepare_subexperiment(exp_dir + simu, prep_single = False)
 
 for simu in ["simushared", "simushrunken"]
