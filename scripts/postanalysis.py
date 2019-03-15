@@ -9,115 +9,168 @@ import parsemm2a
 import simuparams
 from scipy.stats import chi2
 
-def gene_codeml_tdr(score, trueposw, outname):
+def gene_codeml_fdr(score, truepos, outname):
 
-    ngene = len(trueposw)
-    print(ngene)
+    ngene = len(score)
+    fromsimu = len(truepos)
+    ntrue = len([x for (gene,x) in truepos.items() if x > 0])
+    nfalse = ngene - ntrue
 
-    with open(outname + ".genetdr_codeml", 'w') as outfile:
-        etdr = 0
-        tdr = 0
+    with open(outname + "_codeml.genefdr", 'w') as outfile:
+
+        # header 
+        if fromsimu:
+            outfile.write("{0:15s}\t{1:5s}\t{2:7s}\t{3:7s}\t{4:7s}\t{5:7s}\t{6:7s}\n".format("#gene", "dlnL", "pval", "e-fdr", "fdr", "tpr", "fpr"))
+        else:
+            outfile.write("{0:15s}\t{1:5s}\t{2:7s}\t{3:7s}\n".format("gene", "dlnL", "pval", "e-fdr"))
+
         n = 0
+        fp = 0
+        tp = 0
         for (gene,dlnl) in sorted(score.items(), key=lambda kv: kv[1], reverse=True):
 
             if dlnl>0:
                 n = n + 1
                 pval = (1 - chi2.cdf(2*dlnl,1))/2
                 efdr = ngene*pval/n
-                etdr = 1 - ngene*pval/n
-                if trueposw[gene] > 0:
-                    tdr = tdr + 1
-                fdr = n - tdr
-                    
-                outfile.write("{0:15s}\t{1:5.2f}\t{2:7.5f}\t{3:7.5f}\t{4:7.5f}\n".format(gene,dlnl,pval,efdr,fdr/n))
-                #outfile.write("{0:15s}\t{1:5.2f}\t{2:7.5f}\t{3:7.5f}\t{4:7.5f}\n".format(gene,dlnl,pval,etdr,tdr/n))
+                if efdr > 1:
+                    efdr = 1
+                if fromsimu:
+                    if truepos[gene] > 0:
+                        tp = tp + 1
+                    else:
+                        fp = fp + 1
+                    # false discovery rate
+                    fdr = fp / n
+                    # sensitivity or recall
+                    tpr = tp / ntrue
+                    # 1 - specificity: false positive rate
+                    fpr = fp / nfalse
+                    outfile.write("{0:15s}\t{1:5.2f}\t{2:7.5f}\t{3:7.5f}\t{4:7.5f}\t{5:7.5f}\t{6:7.5f}\n".format(gene,dlnl,pval,efdr,fdr,tpr,fpr))
+                else:
+                    outfile.write("{0:15s}\t{1:5.2f}\t{2:7.5f}\t{3:7.5f}\n".format(gene,dlnl,pval,efdr))
 
-def gene_tdr(cutoff_list, namelist, score, trueposw, outname):
+def gene_fdr(cutoff_list, score, truepos, outname):
 
-    methodgene_ndisc = dict()
-    methodgene_tdr = dict()
-    methodgene_etdr = dict()
+    ngene = len(score)
+    fromsimu = len(truepos)
+    ntrue = len([x for (gene,x) in truepos.items() if x > 0])
+    nfalse = ngene - ntrue
+
+    gene_ndisc = dict()
+    gene_fp = dict()
+    gene_efdr = dict()
+    gene_etpr = dict()
+    for cutoff in cutoff_list:
+        gene_ndisc[cutoff] = 0
+        gene_fp[cutoff] = 0
+        gene_efdr[cutoff] = 0
+        gene_etpr[cutoff] = 0
+
+    with open(outname + ".genefdr", 'w') as outfile:
+
+        # header
+        if fromsimu:
+            outfile.write("{0:15s}\t{1:7s}\t{2:7s}\t{3:7s}\t{4:7s}\t{5:7s}\t{6:7s}\n".format("#gene", "pp", "e-fdr", "e-tpr", "fdr", "tpr", "fpr"))
+        else:
+            outfile.write("{0:15s}\t{1:7s}\t{2:7s}\t{3:7s}\n".format("gene", "pp", "e-fdr", "e-tpr"))
+
+        # estimated total number of positively selected genes
+        etotp = sum([pp for (gene,pp) in score.items()])
+
+        fp = 0
+        tp = 0
+        n = 0
+        totpp = 0
+
+        for (gene,pp) in sorted(score.items(), key=lambda kv: kv[1], reverse=True):
+            n = n + 1
+            # total post prob for positive selection thus far: estimated number of true positives in selected set
+            totpp = totpp + pp
+            # estimated rate of false discovery: 1 - FP / N
+            efdr = 1 - totpp/n
+            # estimated sensitivity (true positive rate): TP / TOT NUMBER OF POS SEL GENES
+            etpr = totpp / etotp
+
+            if fromsimu:
+                if truepos[gene] > 0:
+                    tp = tp + 1
+                else:
+                    fp = fp + 1
+                # false discovery rate
+                fdr = fp / n
+                # sensitivity or recall
+                tpr = tp / ntrue
+                # 1 - specificity: false positive rate
+                fpr = fp / (ngene - ntrue)
+                outfile.write("{0:15s}\t{1:7.5f}\t{2:7.5f}\t{3:7.5f}\t{4:7.5f}\t{5:7.5f}\t{6:7.5f}\n".format(gene,score[gene],efdr,etpr,fdr,tpr,fpr))
+            else:
+                outfile.write("{0:15s}\t{1:7.5f}\t{2:7.5f}\t{3:7.5f}\n".format(gene,score[gene],efdr,etpr))
+
+            for cutoff in cutoff_list:
+                if pp > cutoff:
+                    gene_ndisc[cutoff] = n
+                    gene_fp[cutoff] = fp
+                    gene_efdr[cutoff] = efdr
+                    gene_etpr[cutoff] = etpr
+
+    return [gene_ndisc, gene_fp, gene_efdr, gene_etpr]
+
+
+def method_gene_fdr(cutoff_list, namelist, score, truepos, outname):
+
+    ngene = len(score)
+    fromsimu = len(truepos)
+    ntrue = len([x for (gene,x) in truepos.items() if x > 0])
+    nfalse = ngene - ntrue
+
+    gene_ndisc = dict()
+    gene_fp = dict()
+    gene_efdr = dict()
+    gene_etpr = dict()
 
     for name in namelist:
-        if name != "codeml":
-            gene_ndisc = dict()
-            gene_tdr = dict()
-            gene_etdr = dict()
-            for cutoff in cutoff_list:
-                gene_ndisc[cutoff] = 0
-                gene_tdr[cutoff] = 0
-                gene_etdr[cutoff] = 0
+        [gene_ndisc[name], gene_fp[name], gene_efdr[name], gene_etpr[name]] = gene_fdr(cutoff_list, score[name], truepos, outname + "_" + name);
+    with open(outname + ".genefdr", 'w') as outfile:
 
-    for name in namelist:
-        if name != "codeml":
-
-            gene_ndisc = dict()
-            gene_tdr = dict()
-            gene_etdr = dict()
-            for cutoff in cutoff_list:
-                gene_ndisc[cutoff] = 0
-                gene_tdr[cutoff] = 0
-                gene_etdr[cutoff] = 0
-
-            with open(outname + ".genetdr_" + name, 'w') as outfile:
-                etdr = 0
-                tdr = 0
-                n = 0
-                for (gene,pp) in sorted(score[name].items(), key=lambda kv: kv[1], reverse=True):
-                    n = n + 1
-                    etdr = etdr + pp
-                    if trueposw[gene] > 0:
-                        tdr = tdr + 1
-                        
-                    outfile.write("{0:15s}\t{1:5.2f}\t{2:5.2f}\t{3:5.2f}\n".format(gene,pp,etdr/n,tdr/n))
-
-                    for cutoff in cutoff_list:
-                        if pp > cutoff:
-                            gene_ndisc[cutoff] = n
-                            gene_tdr[cutoff] = tdr
-                            gene_etdr[cutoff] = etdr
-
-            methodgene_ndisc[name] = gene_ndisc
-            methodgene_tdr[name] = gene_tdr
-            methodgene_etdr[name] = gene_etdr
-
-    with open(outname + ".genetdr", 'w') as outfile:
-        outfile.write("")
-        for name in namelist:
-            if name != "codeml":
-                outfile.write("  {0:>18s}".format(name))
-        outfile.write("\n")
-
-        outfile.write("cutoff")
-        for name in namelist:
-            if name != "codeml":
-                outfile.write("  {0:>5s} {1:>5s} {2:>5s} ".format("disc", "etdr", "tdr"))
-        outfile.write("\n")
-
+        outfile.write("{0:>18s}".format(""))
         for cutoff in cutoff_list:
+            if fromsimu:
+                outfile.write("{0:^29.2f}".format(cutoff))
+            else:
+                outfile.write("{0:^19.2f}".format(cutoff))
+        outfile.write("\n")
 
-            outfile.write("{0:5.2f}".format(cutoff))
-            for name in namelist:
-                if name != "codeml":
-                    tdr = 0
-                    etdr = 0
-                    ndisc = methodgene_ndisc[name][cutoff]
+        outfile.write("{0:>18s}".format(""))
+        for cutoff in cutoff_list:
+            if fromsimu:
+                outfile.write("  {0:>5s} {1:>5s} {2:>5s} {3:>5s} {4:>5s}".format("disc", "efdr", "fdr", "etpr", "tpr"))
+            else:
+                outfile.write("  {0:>5s} {1:>5s} {2:>5s}".format("disc", "efdr", "etpr"))
+        outfile.write("\n")
+
+        for name in namelist:
+
+            if name != "codeml":
+                outfile.write("{0:>18s}".format(name))
+
+                for cutoff in cutoff_list:
+                    ndisc = gene_ndisc[name][cutoff]
                     if ndisc:
-                        tdr = methodgene_tdr[name][cutoff] / ndisc
-                        etdr = methodgene_etdr[name][cutoff] / ndisc
-                    outfile.write("  {0:5d} {1:5.2f} {2:5.2f} ".format(ndisc, etdr, tdr))
+                        efdr = gene_efdr[name][cutoff]
+                        etpr = gene_etpr[name][cutoff]
+                        if fromsimu:
+                            fdr = gene_fp[name][cutoff] / ndisc
+                            tpr = (ndisc - gene_fp[name][cutoff]) / ntrue
+                            outfile.write("  {0:5d} {1:5.2f} {2:5.2f} {3:5.2f} {4:5.2f}".format(ndisc, efdr, fdr, etpr, tpr))
+                        else:
+                            outfile.write("  {0:5d} {1:5.2f} {2:5.2f}".format(ndisc, efdr, etpr))
 
             outfile.write("\n")
 
-
-
 def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a_postanalysis", burnin = 20, dlnlmin = 0, min_omega = 1.0):
 
-    # compare codeml and m2a analyses
-
-    # cutoff_list = [0.9]
-    cutoff_list = [0.5, 0.7, 0.9]
-    # cutoff_list = [0.5, 0.7, 0.9]
+    cutoff_list = [0.1,0.3, 0.5, 0.7, 0.9]
 
     exp_dir = exp_folder + "/"
     codeml_dir = exp_dir + "codeml/"
@@ -173,60 +226,36 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
 
     namelist = []
 
+    print("parsing codeml")
     # parsing codeml results
     name = "codeml"
     codeml_res = parsecodeml.parse_list(codeml_dir, genelist)
     [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name]] = codeml_res[0:7]
     namelist.append(name)
 
+    print("parsing single gene analyses")
     # parsing m2a results
     for name in single_basename:
+        print(name)
         single_res = parsem2a.parse_list(name, genelist, int(burnin), path=single_dir, min_omega = min_omega)
         [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name], score2[name], score3[name]] = single_res[0:9]
         namelist.append(name)
 
+    print("parsing multi gene analyses")
     # parsing mm2a results
     for name in multi_basename:
+        print(name)
         multi_res = parsemm2a.parse_list(name, int(burnin), path=multi_dir)
         [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name], score2[name], score3[name], hyperparams[name]] = multi_res[0:10]
         namelist.append(name)
 
+    print("printing out sorted list in .sortedparams")
+
     codeml_dlnl = score["codeml"]
-
-    nsel = dict()
-    etdr = dict()
-    if fromsimu:
-        tdr = dict()
-
-    for cutoff in cutoff_list:
-        cnsel = dict()
-        cetdr = dict()
-        if fromsimu:
-            ctdr = dict()
-        for name in namelist:
-            gcnsel = dict()
-            gcetdr = dict()
-            if fromsimu:
-                gctdr = dict()
-            for gene in genelist:
-                gcnsel[gene] = sum([(pp>cutoff) for (i,pp) in selectedsites[name][gene].items()])
-                gcetdr[gene] = sum([pp for (i,pp) in selectedsites[name][gene].items() if pp > cutoff])
-                if fromsimu:
-                    gctdr[gene] = sum([ ((pp > cutoff) and (truesiteom[gene][i] > 1.0)) for (i,pp) in selectedsites[name][gene].items()])
-            cnsel[name] = gcnsel
-            cetdr[name] = gcetdr
-            if fromsimu:
-                ctdr[name] = gctdr
-        nsel[cutoff] = cnsel
-        etdr[cutoff] = cetdr
-        if fromsimu:
-            tdr[cutoff] = ctdr
 
     with open(outname + ".sortedparams", 'w') as geneoutfile:
 
-        #
         # header 
-        #
 
         geneoutfile.write("methods:\n")
         for i,name in enumerate(namelist):
@@ -236,7 +265,7 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
         geneoutfile.write("{:15}".format("gene"))
         geneoutfile.write("  {:>6}".format("dlnl"))
         for i in range(len(namelist)-1):
-            geneoutfile.write("  {:>4}{:1}".format("pp_",i+1))
+            geneoutfile.write("{:>7}{:1}".format("pp_",i+1))
 
         geneoutfile.write(" ")
 
@@ -256,6 +285,7 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
 
         geneoutfile.write(" ")
 
+        geneoutfile.write("\n")
         geneoutfile.write("\n")
 
         #
@@ -284,36 +314,37 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
             for name in namelist:
                 geneoutfile.write("  {0:6.2f}".format(posom[name][gene]))
 
-            for cutoff in cutoff_list:
-                geneoutfile.write(" ")
-                for name in namelist:
-                    geneoutfile.write("  {0:2d}".format(nsel[cutoff][name][gene]))
-                    if fromsimu:
-                        if name == "codeml":
-                            geneoutfile.write(" ({0:2d})".format(tdr[cutoff][name][gene]))
-                        else:
-                            geneoutfile.write(" ({0:2d} ; {1:3.1f})".format(tdr[cutoff][name][gene], etdr[cutoff][name][gene]))
+            # site-level statistics -- deactivated
 
+            #for cutoff in cutoff_list:
+            #    geneoutfile.write(" ")
+            #    for name in namelist:
+            #        geneoutfile.write("  {0:2d}".format(nsel[cutoff][name][gene]))
+            #        if fromsimu:
+            #            if name == "codeml":
+            #                geneoutfile.write(" ({0:2d})".format(tdr[cutoff][name][gene]))
+            #            else:
+            #                geneoutfile.write(" ({0:2d} ; {1:3.1f})".format(tdr[cutoff][name][gene], etdr[cutoff][name][gene]))
             geneoutfile.write("\n")
 
-    with open(outname + ".sitepp", 'w') as siteoutfile:
+    #with open(outname + ".sitepp", 'w') as siteoutfile:
 
         #
         # gene list in decreasing order of dlnl
         #
 
-        for (gene,lnl) in sorted(codeml_dlnl.items(), key=lambda kv: kv[1], reverse=True):
-            if lnl >= dlnlmin:
-                for (i,pp) in selectedsites["codeml"][gene].items():
-                    siteoutfile.write("{0}\t{1}\t{2}".format(gene,i+1,pp))
-                    for name in namelist:
-                        if name != "codeml":
-                            siteoutfile.write("\t{0}".format(sitepp[name][gene][i]))
-                    siteoutfile.write("\n")
-
+    #    for (gene,lnl) in sorted(codeml_dlnl.items(), key=lambda kv: kv[1], reverse=True):
+    #        if lnl >= dlnlmin:
+    #            for (i,pp) in selectedsites["codeml"][gene].items():
+    #                siteoutfile.write("{0}\t{1}\t{2}".format(gene,i+1,pp))
+    #                for name in namelist:
+    #                    if name != "codeml":
+    #                        siteoutfile.write("\t{0}".format(sitepp[name][gene][i]))
+    #                siteoutfile.write("\n")
 
     hypernamelist = ['purom_mean', 'purom_invconc', 'dposom_mean', 'dposom_invshape', 'purw_mean', 'purw_invconc', 'posw_mean', 'posw_invconc', 'pi']
 
+    print("printing out estimated hyperparameters")
     with open(outname + ".hyper", 'w') as outfile:
 
         # posterior mean and credible interval for hyperparams of multigene runs
@@ -331,82 +362,22 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
         outfile.write('\n')
 
         # mean and stdev of distribution of true versus post mean estimates for the 4 key parameters
-        outfile.write("{0:10s}\t{1:^6s}\t{2:^6s}\t{3:^6s}\t{4:^6s}\t{5:^6s}\n".format("method", "pi", "posw", "stdev", "posom", "stedv"))
-        if fromsimu:
-            outfile.write("{0:10s}\t{1:6.4f}\t{2:6.4f}\t{3:6.4f}\t{4:6.4f}\t{5:6.4f}\n".format("simu", pi, posw_mean, numpy.sqrt(posw_var), 1.0 + dposom_mean, numpy.sqrt(dposom_var)))
+        # outfile.write("{0:10s}\t{1:^6s}\t{2:^6s}\t{3:^6s}\t{4:^6s}\t{5:^6s}\n".format("method", "pi", "posw", "stdev", "posom", "stedv"))
+        # if fromsimu:
+        #    outfile.write("{0:10s}\t{1:6.4f}\t{2:6.4f}\t{3:6.4f}\t{4:6.4f}\t{5:6.4f}\n".format("simu", pi, posw_mean, numpy.sqrt(posw_var), 1.0 + dposom_mean, numpy.sqrt(dposom_var)))
 
         #for name in namelist:
         #    (est_pi, est_purw_mean, est_purw_var, est_purw_invconc, est_posw_mean, est_posw_var, est_posw_invconc, est_purom_mean, est_purom_var, est_purom_invconc, est_posom_mean, est_posom_var, est_posom_invshape) = simuparams.get_empirical_hyperparams(posw[name], posw[name], posom[name], posom[name])
         #    outfile.write("{0:10s}\t{1:6.4f}\t{2:6.4f}\t{3:6.4f}\t{4:6.4f}\t{5:6.4f}\n".format(name, est_pi, est_posw_mean, numpy.sqrt(est_posw_var), est_posom_mean, numpy.sqrt(est_posom_var)))
 
+    print("gene-level fdr")
+    truepos = []
     if fromsimu:
+        truepos = trueposw
 
-        gene_codeml_tdr(score["codeml"], trueposw, outname)
+    gene_codeml_fdr(score["codeml"], truepos, outname)
+    namelist2 = [name for name in namelist if name != "codeml"]
+    method_gene_fdr(cutoff_list, namelist2, score, truepos, outname)
 
-        cutoff_list = [0.5, 0.6, 0.7, 0.8, 0.9]
+    print("done")
 
-        methodsitendisc = dict()
-        methodsitetdr = dict()
-        methodsiteetdr = dict()
-
-        for name in namelist:
-
-            sitendisc = dict()
-            sitetdr = dict()
-            siteetdr = dict()
-
-            for cutoff in cutoff_list:
-
-                sitendisc[cutoff] = 0
-                sitetdr[cutoff] = 0
-                siteetdr[cutoff] = 0
-
-                for (gene,lnl) in sorted(codeml_dlnl.items(), key=lambda kv: kv[1], reverse=True):
-                    if lnl >= dlnlmin:
-
-                        ndisc = sum([(pp > cutoff) for pp in sitepp[name][gene]])
-                        etdr = sum([pp for pp in sitepp[name][gene] if pp > cutoff])
-                        tdr = sum([ ((pp > cutoff) and (truesiteom[gene][i] > 1.0)) for i,pp in enumerate(sitepp[name][gene]) ])
-
-                        sitendisc[cutoff] = sitendisc[cutoff] + ndisc
-                        siteetdr[cutoff] = siteetdr[cutoff] + etdr
-                        sitetdr[cutoff] = sitetdr[cutoff] + tdr
-
-                    methodsitendisc[name] = sitendisc
-                    methodsitetdr[name] = sitetdr
-                    methodsiteetdr[name] = siteetdr
-                
-
-        with open(outname + ".sitetdr", 'w') as outfile:
-            outfile.write("")
-            for name in namelist:
-                outfile.write("  {0:>18s}".format(name))
-            outfile.write("\n")
-
-            outfile.write("cutoff")
-            for name in namelist:
-                outfile.write("  {0:>5s} {1:>5s} {2:>5s} ".format("disc", "etdr", "tdr"))
-            outfile.write("\n")
-
-            for cutoff in cutoff_list:
-
-                outfile.write("{0:5.2f}".format(cutoff))
-                for name in namelist:
-
-                    tdr = 0
-                    etdr = 0
-                    ndisc = methodsitendisc[name][cutoff]
-                    if ndisc:
-                        tdr = methodsitetdr[name][cutoff] / ndisc
-                        etdr = methodsiteetdr[name][cutoff] / ndisc
-
-                    outfile.write("  {0:5d} {1:5.2f} {2:5.2f} ".format(ndisc, etdr, tdr))
-
-                outfile.write("\n")
-
-        # gene true discovery rate
-
-        cutoff_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-        gene_tdr(cutoff_list, namelist, score, trueposw, outname + "1")
-        gene_tdr(cutoff_list, namelist, score2, truepos2, outname + "2")
-        gene_tdr(cutoff_list, namelist, score3, truepos2, outname + "3")
