@@ -39,6 +39,6 @@ for simu in ["simu30", "simu10", "simu03"]:
 for simu in ["simu30_shrink_dposom03", "simu30_shrink_dposom01", "simu30_shrink_posw03", "simu30_shrink_posw01"]:
     prepare_subexperiment(exp_dir + simu, prep_single = False)
 
-for simu in ["simushared", "simushrunken"]
+for simu in ["simushared", "simushrunken"]:
     prepare_subexperiment(exp_dir + simu, prep_single = False)
 
