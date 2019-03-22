@@ -22,10 +22,17 @@ simu_list = ["simu30", "simu10", "simu03", "simu30_shrink_dposom03", "simu30_shr
 # for all single-gene simulations: also uncons and uninf multigene
 # for simu30 10 and 03: single gene m2a analyses
 
+gene_file = exp_dir + "/empirical/all.list"
+with open(gene_file, 'r') as infile:
+    ngene = len([line for line in infile])
+
 for simu in simu_list:
 
+    simu_folder = exp_dir + simu 
+
     # codeml
-    runcodeml(exp_dir + simu, machine="occigen", queue="none", core = 24, njobs_per_batch = 24, time = 24, mem=16, path2batch = simu_folder + "/codeml/", path2run = path2codeml_occigen)
+    runcodeml(exp_dir + simu, machine="pbil", queue="none", core = 1, njobs_per_batch = 1, time = 24, mem=2, path2batch = simu_folder + "/codeml/", path2run = path2codeml_pbil)
+    # runcodeml(exp_dir + simu, machine="occigen", queue="none", core = 24, njobs_per_batch = 24, time = 24, mem=16, path2batch = simu_folder + "/codeml/", path2run = path2codeml_occigen)
 
     # multi gene bayescode
 
