@@ -83,7 +83,7 @@ runmm2a(emp_folder, uninfindmm2a_options, "uninfindmm2a", machine="occigen", que
 
 # multigene post pred bash scripts (prepare them already at that step)
 
-runppredmm2a(emp_folder, "sharedmm2a", burnin = 100, every = 30, nrep = 1, machine="occigen", queue="none", nodes=nodes, core=core, time=1, mem=16, path2batch = emp_folder + "/multigene/", path2run = path2bayescode_occigen)
-runppredmm2a(emp_folder, "shrunkenmm2a", burnin = 100, every = 30, nrep = 1, machine="occigen", queue="none", nodes=nodes, core=core, time=1, mem=16, path2batch = emp_folder + "/multigene/", path2run = path2bayescode_occigen)
+runppredmm2a(emp_folder, "sharedmm2a", burnin = 500, every = 30, nrep = 1, machine="occigen", queue="none", nodes=nodes, core=core, time=1, mem=16, path2batch = emp_folder + "/multigene/", path2run = path2bayescode_occigen)
+runppredmm2a(emp_folder, "shrunkenmm2a", burnin = 500, every = 30, nrep = 1, machine="occigen", queue="none", nodes=nodes, core=core, time=1, mem=16, path2batch = emp_folder + "/multigene/", path2run = path2bayescode_occigen)
 
 
