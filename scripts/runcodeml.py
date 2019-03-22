@@ -59,7 +59,9 @@ def reruncodeml(exp_folder, machine="p2chpd", batch_mode = "sbatch", queue = "pa
     with open("rerun.list", 'r') as listfile:
         gene_list = [gene.rstrip('\n').replace(".codeml:0","") for gene in listfile]
 
+    print("rerunning:")
     for gene in gene_list:
+        print(gene)
         os.system("rm " + gene + ".codeml")
 
     os.chdir(current_dir)

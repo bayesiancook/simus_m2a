@@ -8,11 +8,11 @@ from makebatch import *
 
 def runmm2a(exp_folder, options, basename, machine = "p2chpd", queue = "parallel2", nodes=1, core = 8, time = 50, mem=16, batch_mode = "sbatch", path2batch = "", path2run = ""):
 
-    exp_dir = exp_folder + "/"
-    multi_dir = exp_dir + "multigene/"
-    if not os.path.exists(multi_dir):
-        print("multigene directory does not exist")
-        sys.exit()
+    #exp_dir = exp_folder + "/"
+    #multi_dir = exp_dir + "multigene/"
+    #if not os.path.exists(multi_dir):
+    #    print("multigene directory does not exist")
+    #    sys.exit()
 
     # make batch file
     command = "multigenecodonm2a -d all.list -t all.tree " + options + " " + basename 
@@ -30,11 +30,11 @@ def runppredmm2a(exp_folder, basename, options = "", machine = "p2chpd", queue =
 
     until = burnin + nrep * every + 1
 
-    exp_dir = exp_folder + "/"
-    multi_dir = exp_dir + "multigene/"
-    if not os.path.exists(multi_dir):
-        print("multigene directory does not exist")
-        sys.exit()
+    #exp_dir = exp_folder + "/"
+    #multi_dir = exp_dir + "multigene/"
+    #if not os.path.exists(multi_dir):
+    #    print("multigene directory does not exist")
+    #    sys.exit()
 
     # make batch file
     command = "readmultigenecodonm2a -x {0} {1} {2} -ppred {3} {4}".format(burnin, every, until, options, basename)

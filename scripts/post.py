@@ -11,5 +11,5 @@ outname = sys.argv[2]
 single_basename = ["uninfm2a", "uninfpi50m2a"]
 multi_basename = ["indmm2a", "shrunkenmm2a"]
 
-postanalysis.m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = outname, burnin = 20, dlnlmin = 3, min_omega = 1.2)
+postanalysis.m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = outname)
 

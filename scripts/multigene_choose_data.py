@@ -5,7 +5,7 @@ import re
 from ete3 import Tree
 
 if len(sys.argv) == 1:
-    print("choose_data.py data_folder list_name taxfile_name min_ntaxa min_nsite max_nsite target_folder")
+    print("multigene_choose_data.py data_folder list_name taxfile_name min_ntaxa min_nsite max_nsite target_folder")
     sys.exit()
 
 data_folder = sys.argv[1]
@@ -60,7 +60,9 @@ for gene in genelist:
             #genus_name = m.group(1)
             #if not all_missing.match(entry[1]) and genus_name in target_taxlist:
             #    ali[genus_name] = entry[1]
-            if not all_missing.match(entry[1]) and entry[0] in target_taxlist:
+
+            if entry[0] in target_taxlist:
+            # if not all_missing.match(entry[1]) and entry[0] in target_taxlist:
                 ali[entry[0]] = entry[1]
 
         gene_taxlist = [taxon for (taxon,seq) in ali.items()]
@@ -86,8 +88,12 @@ for gene in genelist:
             selection.append(gene_short_name)
             with open(target_dir + gene_short_name + ".ali", 'w') as alifile:
                 alifile.write("{0} {1}\n".format(gene_ntaxa, gene_nsite))
-                for (taxon,seq) in ali.items():
-                    alifile.write("{0}  {1}\n".format(taxon,seq))
+                for taxon in target_taxlist:
+                # for (taxon,seq) in ali.items():
+                    if taxon in ali:
+                        alifile.write("{0}  {1}\n".format(taxon,ali[taxon]))
+                    else:
+                        alifile.write("{0}  {1}\n".format(taxon,"?" * gene_nsite))
 
 print("gene selection", len(selection))
 print("nsite min: ", min, " max: ", max)

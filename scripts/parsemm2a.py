@@ -1,9 +1,12 @@
+#! /usr/bin/python3.5
+
 import sys
 import os
 from numpy import mean
 from numpy import product
+from fdr import gene_fdr
 
-def parse_list(chain_name, burnin, path = "", min_omega = 1.0) :
+def parse_list(chain_name, burnin, with_sites = True, path = "", min_omega = 1.0) :
 
     current_dir = os.getcwd() + "/"
     if path != "":
@@ -88,6 +91,8 @@ def parse_list(chain_name, burnin, path = "", min_omega = 1.0) :
 
     gene_sitepp = dict()
     gene_postselprob2 = dict()
+    gene_postselprob3 = dict()
+
     for gene in gene_list:
         gene_sitepp[gene] = [0 for site in range(gene_nsite[gene])]
         gene_postselprob2[gene] = 0
@@ -103,58 +108,58 @@ def parse_list(chain_name, burnin, path = "", min_omega = 1.0) :
                 print("error: non matching sample size")
                 raise
 
-    with open(chain_name + ".sitepp", 'r') as sitepp_file:
+    if with_sites:
+        with open(chain_name + ".sitepp", 'r') as sitepp_file:
 
-        for i in range(burnin):
-            line = sitepp_file.readline()
+            for i in range(burnin):
+                line = sitepp_file.readline()
 
-        sample_size = 0
-        for line in sitepp_file:
-            sample = line.rstrip('\n').split()
-            if len(sample) != totnsite + ngene:
-                print("error: non matching number of sites")
-                print(totnsite, ngene, len(sample))
-                raise
-            
-            index = 0
-            # for j in range(ngene):
-            for j,gene in enumerate(gene_list):
-                name = sample[index].replace(".ali","")
-                if name != gene:
-                    print("error: non matching gene name")
-                    sys.exit()
+            sample_size = 0
+            for line in sitepp_file:
+                sample = line.rstrip('\n').split()
+                if len(sample) != totnsite + ngene:
+                    print("error: non matching number of sites")
+                    print(totnsite, ngene, len(sample))
+                    raise
+                
+                index = 0
+                # for j in range(ngene):
+                for j,gene in enumerate(gene_list):
+                    name = sample[index].replace(".ali","")
+                    if name != gene:
+                        print("error: non matching gene name")
+                        sys.exit()
 
-                index = index + 1
+                    index = index + 1
 
+                    sitepp = gene_sitepp[gene]
+
+                    pp_prod = 1.0
+                    for k in range(gene_nsite[gene]):
+                        pp = float(sample[index+k])
+                        sitepp[k] = sitepp[k] + pp
+                        pp_prod = pp_prod * (1-pp)
+                    index = index + gene_nsite[gene]
+
+                    gene_postselprob2[gene] = gene_postselprob2[gene] + (1 - pp_prod) * (gene_posom_sample[gene][sample_size] > min_omega)
+
+                sample_size = sample_size + 1
+
+            for gene in gene_list:
+                gene_postselprob2[gene] = gene_postselprob2[gene] / sample_size
                 sitepp = gene_sitepp[gene]
-
-                pp_prod = 1.0
                 for k in range(gene_nsite[gene]):
-                    pp = float(sample[index+k])
-                    sitepp[k] = sitepp[k] + pp
-                    pp_prod = pp_prod * (1-pp)
-                index = index + gene_nsite[gene]
+                    sitepp[k] = sitepp[k] / sample_size
 
-                gene_postselprob2[gene] = gene_postselprob2[gene] + (1 - pp_prod) * (gene_posom_sample[gene][sample_size] > min_omega)
+                sel = dict()
+                for i,pp in enumerate(sitepp):
+                    if pp > 0.5:
+                        sel[i] = pp
 
-            sample_size = sample_size + 1
+                gene_selectedsites[gene] = sel
 
         for gene in gene_list:
-            gene_postselprob2[gene] = gene_postselprob2[gene] / sample_size
-            sitepp = gene_sitepp[gene]
-            for k in range(gene_nsite[gene]):
-                sitepp[k] = sitepp[k] / sample_size
-
-            sel = dict()
-            for i,pp in enumerate(sitepp):
-                if pp > 0.5:
-                    sel[i] = pp
-
-            gene_selectedsites[gene] = sel
-
-    gene_postselprob3 = dict()
-    for gene in gene_list:
-        gene_postselprob3[gene] = mean([posom > min_omega for posom in gene_posom_sample[gene]]) * (1 - product([1-gene_sitepp[gene][i] for i in range(gene_nsite[gene])]))
+            gene_postselprob3[gene] = mean([posom > min_omega for posom in gene_posom_sample[gene]]) * (1 - product([1-gene_sitepp[gene][i] for i in range(gene_nsite[gene])]))
     
     if path != "":
         os.chdir(current_dir)
@@ -166,7 +171,35 @@ if __name__ == "__main__":
     import sys
     chain_name = sys.argv[1]
     burnin = int(sys.argv[2])
+    with_sites = True
+    if sys.argv[3] == "-s":
+        with_sites = False
 
-    ret = parse(chain_name, burnin)
-    print(ret)
+    res = parse_list(chain_name, burnin, with_sites=with_sites)
+    [score, posw, posom, minposom, maxposom, selectedsites, sitepp, score2, score3, hyperparams] = res[0:10]
+    truepos = dict()
+    cutoff_list = [0.5, 0.7, 0.9]
+    [gene_ndisc, gene_fp, gene_efdr, gene_etpr] = gene_fdr(cutoff_list, score, truepos, chain_name)
+
+    with open(chain_name + ".genefdr", 'w') as outfile:
+        outfile.write("{0:5s} {1:5s} {2:5s} {3:5s}\n".format("c", "ndisc", "efdr", "etpr"))
+        for cutoff in cutoff_list:
+            ndisc = gene_ndisc[cutoff]
+            if ndisc:
+                efdr = gene_efdr[cutoff]
+                etpr = gene_etpr[cutoff]
+                outfile.write("{0:5.1f} {1:5d} {2:5.2f} {3:5.2f}\n".format(cutoff, ndisc, efdr, etpr))
+
+
+    print("stats in " + chain_name + ".genefdr")
+
+    with open(chain_name+ ".posthyper", 'w') as outfile:
+
+        hypernamelist = ['purom_mean', 'purom_invconc', 'dposom_mean', 'dposom_invshape', 'purw_mean', 'purw_invconc', 'posw_mean', 'posw_invconc', 'pi']
+        for i,name in enumerate(hypernamelist):
+            outfile.write("{0:20s}".format(name))
+            (mean,min,max) = hyperparams[i]
+            outfile.write("\t{0:6.4f} ({1:6.4f} , {2:6.4f})\n".format(mean,min,max))
+
+    print("estimated hyperparameters in " + chain_name + ".posthyper")
 

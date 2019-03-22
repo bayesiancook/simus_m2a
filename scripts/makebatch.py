@@ -39,7 +39,7 @@ def makebatchlist(command_list, basename, mem=16, time=50, nodes=1, queue="none"
                     batchfile.write(path2run + command_list[batch*njobs_per_batch + i] + " &\n")
                 batchfile.write("wait\n")
 
-def makebatch(command, basename, mem=16, time=50, nodes=1, core=16, queue="none", mode="sbatch", machine = "occigen", path2batch = "", path2run = ""):
+def makebatch(command, basename, mem=16, time=50, nodes=1, core=16, queue="none", mode="sbatch", machine = "occigen", path2batch = "", path2run = "", srun = True):
     with open(path2batch + basename + ".sh", 'w') as batchfile:
         if mode == "sbatch" :
             batchfile.write("#!/bin/bash\n")
@@ -62,10 +62,13 @@ def makebatch(command, basename, mem=16, time=50, nodes=1, core=16, queue="none"
                 batchfile.write("module load intel/18.1 gcc/6.2.0 openmpi/gnu/2.0.2\n")
             batchfile.write("\n")
 
-        if machine == "p2chpd":
-            batchfile.write("srun -n {0} -l --mpi=pmi2 --cpu_bind=Verbose {1}\n".format(nodes*core, path2run + command))
-        if machine == "occigen":
-            batchfile.write("srun --mpi=pmi2 -K1 --resv-ports -n {0} {1}\n".format(nodes*core, path2run + command))
+        if srun:
+            if machine == "p2chpd":
+                batchfile.write("srun -n {0} -l --mpi=pmi2 --cpu_bind=Verbose {1}\n".format(nodes*core, path2run + command))
+            if machine == "occigen":
+                batchfile.write("srun --mpi=pmi2 -K1 --resv-ports -n {0} {1}\n".format(nodes*core, path2run + command))
+        else:
+            batchfile.write(path2run + command)
 
 if __name__ == "__main__":
     import sys
