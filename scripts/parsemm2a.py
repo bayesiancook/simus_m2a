@@ -6,7 +6,7 @@ from numpy import mean
 from numpy import product
 from fdr import gene_fdr
 
-def parse_list(chain_name, burnin, with_sites = True, path = "", min_omega = 1.0) :
+def parse_list(chain_name, burnin, with_sites = True, write_output = False, path = "", min_omega = 1.0) :
 
     current_dir = os.getcwd() + "/"
     if path != "":
@@ -18,10 +18,17 @@ def parse_list(chain_name, burnin, with_sites = True, path = "", min_omega = 1.0
         [data_path, listname, tree_file] = param_file.readline().rstrip('\n').split()
 
     # get gene list
-    # with open(listname, 'r') as listfile:
     with open(chain_name + ".genelist", 'r') as listfile:
         header = listfile.readline()
-        gene_list = [gene.rstrip('\n').split()[0].replace(".ali","") for gene in listfile]
+        ngene = int(header.rstrip('\n').split()[0])
+        gene_list = [gene.rstrip('\n').split()[0].replace(".ali","") for i,gene in enumerate(listfile) if i < ngene]
+
+    # get original gene list
+    with open(listname, 'r') as listfile:
+        header = listfile.readline()
+        ngene = int(header.rstrip('\n').split()[0])
+        original_gene_list = [gene.rstrip('\n').split()[0].replace(".ali","") for i,gene in enumerate(listfile) if i < ngene]
+        # original_gene_list = [gene.rstrip('\n').split()[0].replace(".ali","") for gene in listfile]
 
     # check for ali file and correct number of sites
     gene_nsite = dict()
@@ -161,6 +168,20 @@ def parse_list(chain_name, burnin, with_sites = True, path = "", min_omega = 1.0
         for gene in gene_list:
             gene_postselprob3[gene] = mean([posom > min_omega for posom in gene_posom_sample[gene]]) * (1 - product([1-gene_sitepp[gene][i] for i in range(gene_nsite[gene])]))
     
+    if write_output:
+        with open(chain_name + ".genepost", 'w') as outfile:
+            outfile.write("gene\tpp\tposw\om\n")
+            for gene in original_gene_list:
+                outfile.write("{0}\t{1}\t{2}\t{3}\n".format(gene, gene_postselprob[gene], gene_meanposw[gene], gene_meanposom[gene]))
+
+        if with_sites:
+            with open(chain_name + ".sitepost", 'w') as outfile:
+                outfile.write("gene\tsite\tpp\tposw\n")
+                for gene in original_gene_list:
+                    for i in range(gene_nsite[gene]):
+                        outfile.write("{0}\t{1}\t{2}\n".format(gene, i, gene_sitepp[gene][i]))
+
+
     if path != "":
         os.chdir(current_dir)
 
@@ -175,7 +196,7 @@ if __name__ == "__main__":
     if sys.argv[3] == "-s":
         with_sites = False
 
-    res = parse_list(chain_name, burnin, with_sites=with_sites)
+    res = parse_list(chain_name, burnin, with_sites=with_sites, write_output = True)
     [score, posw, posom, minposom, maxposom, selectedsites, sitepp, score2, score3, hyperparams] = res[0:10]
     truepos = dict()
     cutoff_list = [0.5, 0.7, 0.9]
