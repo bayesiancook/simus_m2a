@@ -57,8 +57,8 @@ def mask_isoforms(aliname, outname, pseudocount = 0.05, cutoff = 0.45, width = 1
             corr[i] = 1 - cond_ent[i] / marg_ent[i]
 
     mask = [int(max([corr[j] for j in range(max(0,i-width), min(naa,i+width+1))]) > cutoff) for i in range(naa)]
-    excluded_nsite = 3*sum(mask)
-    final_nsite = sum([1-m for m in mask])
+    excluded_nsite = sum(mask)
+    final_nsite = 3*sum([1-m for m in mask])
 
     outali = dict()
     for (tax,seq) in nucali.items():
@@ -73,18 +73,22 @@ def mask_isoforms(aliname, outname, pseudocount = 0.05, cutoff = 0.45, width = 1
     with open(outname + ".mask", 'w') as outfile:
         outfile.write("{0}".format(string_mask))
 
-    excluded_nsite = sum([1-m for m in mask])
-    excluded_ali = dict()
-    for (tax,seq) in aaali.items():
-        excluded_ali[tax] = "".join([seq[i] for i in range(naa) if mask[i]])
+    if excluded_nsite:
+        excluded_ali = dict()
+        for (tax,seq) in aaali.items():
+            excluded_ali[tax] = "????????" + "".join([seq[i] for i in range(naa) if mask[i]]) + "????????"
 
-    with open(outname + ".mask.fasta", 'w') as outfile:
-        for (tax,seq) in excluded_ali.items():
-            outfile.write(">{0}\n{1}\n".format(tax,seq))
+        with open(outname + ".mask.fasta", 'w') as outfile:
+            for (tax,seq) in excluded_ali.items():
+                outfile.write(">{0}\n{1}\n".format(tax,seq))
+
+    return (excluded_nsite,naa)
 
 
-aliname = sys.argv[1]
-outname = sys.argv[2]
+if __name__ == "__main__":
 
-mask_isoforms(aliname, outname)
+    import sys
+    aliname = sys.argv[1]
+    outname = sys.argv[2]
+    mask_isoforms(aliname, outname)
 
