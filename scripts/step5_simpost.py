@@ -10,14 +10,14 @@ exp_dir = exp_folder + "/"
 res_dir = exp_dir + "results/"
 
 # post analysis 
-single_basename = ["infm2a", "uninfpi50m2a", "uninfpi10m2a", "uninfpi02m2a", "subjpi50m2a", "subjpi10m2a", "subjpi02m2a"]
+# single_basename = ["infm2a", "uninfpi50m2a", "uninfpi10m2a", "uninfpi02m2a", "subjpi50m2a", "subjpi10m2a", "subjpi02m2a"]
 multi_basename = ["indmm2a", "shrunkenmm2a", "sharedmm2a"]
 full_multi_basename = ["indmm2a", "shrunkenmm2a", "sharedmm2a", "unconsindmm2a", "unconsshrunkenmm2a", "uninfindmm2a", "uninfshrunkenmm2a"]
 
-print("single gene analyses")
-for simu in ["simu30", "simu10", "simu03"]:
-    print(simu)
-    m2a_postanalysis(exp_dir + simu, single_basename, [], outname = res_dir + "single" + simu)
+# print("single gene analyses")
+# for simu in ["simu30", "simu10", "simu03"]:
+#    print(simu)
+#    m2a_postanalysis(exp_dir + simu, single_basename, [], outname = res_dir + "single" + simu)
 
 print("extended multi gene analyses")
 for simu in ["simu30", "simu10", "simu03", "simu30_shrink_dposom03", "simu30_shrink_dposom01", "simu30_shrink_posw03", "simu30_shrink_posw01"]:
