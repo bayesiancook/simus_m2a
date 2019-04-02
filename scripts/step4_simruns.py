@@ -36,27 +36,22 @@ for simu in simu_list:
 
     # multi gene bayescode
 
+    core = 24
+    nodes = ngene // core // 5
+
     sharedmm2a_options= "-x 1 1100 -nucrates shared -bl shared +G"
     shrunkenmm2a_options= "-x 1 1100 -nucrates shrunken -bl shrunken +G"
     indmm2a_options= "-x 1 1100 -nucrates ind -bl ind +G"
 
-    core = 24
-    nodes = ngene // core // 5
+    unconsshrunkenmm2a_options= "-x 1 1100 -nucrates shrunken -bl shrunken +G -unconsprior"
+    unconsindmm2a_options= "-x 1 1100 -nucrates ind -bl ind +G -unconsprior"
+
+    uninfshrunkenmm2a_options= "-x 1 1100 -pi 0.5 0.5 -nucrates shrunken -bl shrunken +G -unconsprior"
+    uninfindmm2a_options= "-x 1 1100 -pi 0.5 0.5 -nucrates ind -bl ind +G -unconsprior"
 
     runmm2a(simu_folder, sharedmm2a_options, "sharedmm2a", machine="occigen", queue="none", nodes=nodes, core=core, time=24, mem=16, path2batch = simu_folder + "/multigene/", path2run = path2bayescode_occigen)
     runmm2a(simu_folder, shrunkenmm2a_options, "shrunkenmm2a", machine="occigen", queue="none", nodes=nodes, core=core, time=24, mem=16, path2batch = simu_folder + "/multigene/", path2run = path2bayescode_occigen)
     runmm2a(simu_folder, indmm2a_options, "indmm2a", machine="occigen", queue="none", nodes=nodes, core=core, time=24, mem=16, path2batch = simu_folder + "/multigene/", path2run = path2bayescode_occigen)
-
-
-# single_simu_list = ["simu30", "simu10", "simu03", "simu30_shrink_dposom03", "simu30_shrink_dposom01", "simu30_shrink_posw03", "simu30_shrink_posw01"]
-# for simu in single_simu_list:
-
-    # additional multi gene bayescode runs
-
-    unconsshrunkenmm2a_options= "-x 1 1100 -nucrates shrunken -bl shrunken +G -unconsprior"
-    unconsindmm2a_options= "-x 1 1100 -nucrates ind -bl ind +G -unconsprior"
-    uninfshrunkenmm2a_options= "-x 1 1100 -pi 0.5 0.5 -nucrates shrunken -bl shrunken +G -unconsprior"
-    uninfindmm2a_options= "-x 1 1100 -pi 0.5 0.5 -nucrates ind -bl ind +G -unconsprior"
 
     runmm2a(simu_folder, unconsshrunkenmm2a_options, "unconsshrunkenmm2a", machine="occigen", queue="none", nodes=nodes, core=core, time=24, mem=16, path2batch = simu_folder + "/multigene/", path2run = path2bayescode_occigen)
     runmm2a(simu_folder, unconsindmm2a_options, "unconsindmm2a", machine="occigen", queue="none", nodes=nodes, core=core, time=24, mem=16, path2batch = simu_folder + "/multigene/", path2run = path2bayescode_occigen)
