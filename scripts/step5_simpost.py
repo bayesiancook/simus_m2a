@@ -8,6 +8,7 @@ from postanalysis import *
 exp_folder = sys.argv[1]
 exp_dir = exp_folder + "/"
 res_dir = exp_dir + "results/"
+with_sites = False
 
 # post analysis 
 # single_basename = ["infm2a", "uninfpi50m2a", "uninfpi10m2a", "uninfpi02m2a", "subjpi50m2a", "subjpi10m2a", "subjpi02m2a"]
@@ -17,15 +18,15 @@ full_multi_basename = ["indmm2a", "shrunkenmm2a", "sharedmm2a", "unconsindmm2a",
 # print("single gene analyses")
 # for simu in ["simu30", "simu10", "simu03"]:
 #    print(simu)
-#    m2a_postanalysis(exp_dir + simu, single_basename, [], outname = res_dir + "single" + simu)
+#    m2a_postanalysis(exp_dir + simu, single_basename, [], outname = res_dir + "single" + simu, with_sites = with_sites)
 
 print("extended multi gene analyses")
 for simu in ["simu30", "simu10", "simu03", "simu30_shrink_dposom03", "simu30_shrink_dposom01", "simu30_shrink_posw03", "simu30_shrink_posw01"]:
     print(simu)
-    m2a_postanalysis(exp_dir + simu, [], full_multi_basename, outname = res_dir + "multi" + simu)
+    m2a_postanalysis(exp_dir + simu, [], full_multi_basename, outname = res_dir + "multi" + simu, with_sites = with_sites)
 
 print("restricted multi gene analyses")
 for simu in ["simushared", "simushrunken"]:
     print(simu)
-    m2a_postanalysis(exp_dir + simu, [], multi_basename, outname = res_dir + simu)
+    m2a_postanalysis(exp_dir + simu, [], multi_basename, outname = res_dir + simu, with_sites = with_sites)
 
