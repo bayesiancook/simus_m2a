@@ -12,6 +12,7 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
     if path != "":
         os.chdir(path)
 
+    print("get params and gene lists")
     # gene general parameters
     with open(chain_name + ".param", 'r') as param_file:
         header = param_file.readline()
@@ -25,22 +26,39 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
 
     # get original gene list
     with open(listname, 'r') as listfile:
-        header = listfile.readline()
-        ngene = int(header.rstrip('\n').split()[0])
-        original_gene_list = [gene.rstrip('\n').split()[0].replace(".ali","") for i,gene in enumerate(listfile) if i < ngene]
-        # original_gene_list = [gene.rstrip('\n').split()[0].replace(".ali","") for gene in listfile]
+        header = listfile.readline().rstrip('\n')
+        if header == "ALI":
+            header = listfile.readline().rstrip('\n')
+            ngene = int(header.split()[0])
+            original_gene_list = []
+            gene_nsite = dict()
+            for i in range(ngene):
+                gene = listfile.readline().rstrip('\n').replace(".ali","")
+                original_gene_list.append(gene)
+                (ntax,npos) = listfile.readline().rstrip('\n').split()
+                ntaxa = int(ntax)
+                for j in range(ntaxa):
+                    line = listfile.readline()
+                    if not j:
+                        (tax,seq) = line.rstrip('\n').split()
+                        gene_nsite[gene] = len(seq) // 3
+        else:
+            ngene = int(header.split()[0])
+            original_gene_list = [gene.rstrip('\n').split()[0].replace(".ali","") for i,gene in enumerate(listfile) if i < ngene]
+            # original_gene_list = [gene.rstrip('\n').split()[0].replace(".ali","") for gene in listfile]
 
-    # check for ali file and correct number of sites
-    gene_nsite = dict()
-    for gene in gene_list:
-        with open(data_path + gene + ".ali", 'r') as ali_file:
-            nsite = int(ali_file.readline().rstrip('\n').split()[1]) // 3
-            gene_nsite[gene] = nsite
+            # check for ali file and correct number of sites
+            gene_nsite = dict()
+            for gene in gene_list:
+                with open(data_path + gene + ".ali", 'r') as ali_file:
+                    nsite = int(ali_file.readline().rstrip('\n').split()[1]) // 3
+                    gene_nsite[gene] = nsite
 
     ngene = len(gene_list)
     # print("number of genes : " , ngene)
     totnsite = sum([gene_nsite[gene] for gene in gene_nsite])
 
+    print("processing hyperparams")
     # open chain file and get hyperparams
     with open(chain_name + ".chain", 'r') as chain_file:
         # header = chain_file.readline()
@@ -60,6 +78,7 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
             post_max = sorted_sample[maxindex]
             hyperparams.append((post_mean, post_min, post_max))
 
+    print("processing gene pps")
     # open posom and posw files 
     with open(chain_name + ".posw", 'r') as posw_file:
         # header = posw_file.readline()
@@ -76,6 +95,7 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
 
         posom_mcmc = [line.rstrip('\n').split()[0:ngene] for line in posom_file]
 
+    print("post processing gene pps")
     gene_postselprob = dict()
     gene_meanposw = dict()
     gene_meanposom = dict()
@@ -118,6 +138,7 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
     if with_sites:
         with open(chain_name + ".sitepp", 'r') as sitepp_file:
 
+            print("processing sitepp file")
             for i in range(burnin):
                 line = sitepp_file.readline()
 
@@ -152,6 +173,7 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
 
                 sample_size = sample_size + 1
 
+            print("post processing site pps")
             for gene in gene_list:
                 gene_postselprob2[gene] = gene_postselprob2[gene] / sample_size
                 sitepp = gene_sitepp[gene]
@@ -169,18 +191,17 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
             gene_postselprob3[gene] = mean([posom > min_omega for posom in gene_posom_sample[gene]]) * (1 - product([1-gene_sitepp[gene][i] for i in range(gene_nsite[gene])]))
     
     if write_output:
-        with open(chain_name + ".genepost", 'w') as outfile:
-            outfile.write("gene\tpp\tposw\om\n")
+        with open(chain_name + ".postanalysis", 'w') as outfile:
+            outfile.write("gene\tpp\tposw\tom")
+            if with_sites:
+                outfile.write("\tsites")
+            outfile.write("\n")
             for gene in original_gene_list:
-                outfile.write("{0}\t{1}\t{2}\t{3}\n".format(gene, gene_postselprob[gene], gene_meanposw[gene], gene_meanposom[gene]))
-
-        if with_sites:
-            with open(chain_name + ".sitepost", 'w') as outfile:
-                outfile.write("gene\tsite\tpp\tposw\n")
-                for gene in original_gene_list:
-                    for i in range(gene_nsite[gene]):
-                        outfile.write("{0}\t{1}\t{2}\n".format(gene, i, gene_sitepp[gene][i]))
-
+                outfile.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}".format(gene, gene_postselprob[gene], gene_meanposw[gene], gene_meanposom[gene], gene_minposom[gene], gene_maxposom[gene]))
+                if with_sites:
+                    for k in range(gene_nsite[gene]):
+                        outfile.write("\t{0}".format(int(100 * gene_sitepp[gene][k])))
+                outfile.write("\n")
 
     if path != "":
         os.chdir(current_dir)
@@ -190,6 +211,10 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
 if __name__ == "__main__":
 
     import sys
+    if len(sys.argv) == 1:
+        print("parsemm2a chain_name burnin [-s]")
+        sys.exit()
+
     chain_name = sys.argv[1]
     burnin = int(sys.argv[2])
     with_sites = True

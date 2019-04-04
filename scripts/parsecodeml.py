@@ -149,7 +149,7 @@ def parse(ali_name, force=True) :
                 print("did not find Naive Empirical Bayes", ali_name)
                 raise CodemlParseError
 
-            # neb_selected = dict()
+            neb_selected = dict()
 
             for line in outfile :
                 line = line.rstrip('\n')
@@ -168,11 +168,11 @@ def parse(ali_name, force=True) :
                 print("did not find Bayes Empirical Bayes", ali_name)
                 raise CodemlParseError
 
-            # neb_sitepp = [0 for i in range(nsite)]
+            neb_sitepp = [0 for i in range(nsite)]
             for (i,pp) in neb_selected.items():
                 neb_sitepp[i] = pp
 
-            # beb_selected = dict()
+            beb_selected = dict()
 
             for line in outfile:
                 line = line.rstrip('\n')
@@ -191,7 +191,7 @@ def parse(ali_name, force=True) :
                 print("did not find grid (end of parsing)", ali_name)
                 raise CodemlParseError
 
-            # beb_sitepp = [0 for i in range(nsite)]
+            beb_sitepp = [0 for i in range(nsite)]
             for (i,pp) in beb_selected.items():
                 beb_sitepp[i] = pp
 
@@ -204,7 +204,7 @@ def parse(ali_name, force=True) :
     return [lnL2 - lnL1, p2, om2, om2, om2, beb_selected, beb_sitepp, neb_selected, neb_sitepp, kappa, length, p0, p1, p2, om0, om1, om2, tree]
 
 
-def parse_list(codeml_dir, gene_list):
+def parse_list(codeml_dir, gene_list, write_output = False):
 
     score = dict()
     posw = dict()
@@ -217,6 +217,18 @@ def parse_list(codeml_dir, gene_list):
     for gene in gene_list:
         res = parse(codeml_dir + gene + ".codeml")
         [score[gene], posw[gene], posom[gene], minposom[gene], maxposom[gene], selectedsites[gene], sitepp[gene]] = res[0:7]
+
+    if write_output:
+        with open(chain_name + ".postanalysis", 'w') as outfile:
+            outfile.write("gene\tpp\tposw\tom\tmin\tmax")
+            if with_sites:
+                outfile.write("\tsites")
+            outfile.write("\n")
+            for gene in gene_list:
+                outfile.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}".format(gene, score[gene], posw[gene], posom[gene], minposom[gene], maxposom[gene]))
+                if with_sites:
+                    outfile.write("\t{0}".format(sitepp[gene]))
+                outfile.write("\n")
 
     return [score, posw, posom, minposom, maxposom, selectedsites, sitepp]
 
