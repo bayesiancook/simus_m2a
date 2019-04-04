@@ -10,7 +10,7 @@ import parsem2a
 import parsemm2a
 import simuparams
 
-def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a_postanalysis", single_burnin = 100, multi_burnin = 500, dlnlmin = 0, min_omega = 1.0):
+def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a_postanalysis", single_burnin = 100, multi_burnin = 500, dlnlmin = 0, min_omega = 1.0, with_sites = False):
 
     cutoff_list = [0.1,0.3, 0.5, 0.7, 0.9]
 
@@ -87,7 +87,7 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
     # parsing mm2a results
     for name in multi_basename:
         print(name)
-        multi_res = parsemm2a.parse_list(name, multi_burnin, path=multi_dir)
+        multi_res = parsemm2a.parse_list(name, multi_burnin, path=multi_dir, with_sites = with_sites)
         [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name], score2[name], score3[name], hyperparams[name]] = multi_res[0:10]
         namelist.append(name)
 
