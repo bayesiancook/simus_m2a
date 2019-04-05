@@ -20,6 +20,21 @@ def runmm2a(exp_folder, options, basename, machine = "p2chpd", queue = "parallel
         command = "multigenecodonm2a -d all.ali -t all.tree " + options + " " + basename 
     makebatch(command, basename, time=time, mem=mem, machine=machine, queue=queue, nodes=nodes, core=core, mode = batch_mode, path2batch = path2batch, path2run=path2run)
 
+
+def runmmutsel(exp_folder, options, basename, machine = "p2chpd", queue = "parallel2", nodes=1, core = 8, time = 50, mem=16, batch_mode = "sbatch", path2batch = "", path2run = "", from_concat = False):
+
+    #exp_dir = exp_folder + "/"
+    #multi_dir = exp_dir + "multigene/"
+    #if not os.path.exists(multi_dir):
+    #    print("multigene directory does not exist")
+    #    sys.exit()
+
+    # make batch file
+    command = "multigeneaamutseldsbdp -d all.list -t all.tree " + options + " " + basename 
+    if from_concat:
+        command = "multigeneaamutseldsbdp -d all.ali -t all.tree " + options + " " + basename 
+    makebatch(command, basename, time=time, mem=mem, machine=machine, queue=queue, nodes=nodes, core=core, mode = batch_mode, path2batch = path2batch, path2run=path2run)
+
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         print("runmm2a.py experiment/subexperiment options basename")
