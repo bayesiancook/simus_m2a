@@ -30,9 +30,9 @@ def runmmutsel(exp_folder, options, basename, machine = "p2chpd", queue = "paral
     #    sys.exit()
 
     # make batch file
-    command = "multigeneaamutseldsbdp -d all.list -t all.tree " + options + " " + basename 
+    command = "multigeneaamutselddp -d all.list -t all.tree " + options + " " + basename 
     if from_concat:
-        command = "multigeneaamutseldsbdp -d all.ali -t all.tree " + options + " " + basename 
+        command = "multigeneaamutselddp -d all.ali -t all.tree " + options + " " + basename 
     makebatch(command, basename, time=time, mem=mem, machine=machine, queue=queue, nodes=nodes, core=core, mode = batch_mode, path2batch = path2batch, path2run=path2run)
 
 if __name__ == "__main__":
