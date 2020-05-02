@@ -74,14 +74,15 @@ def parse_list(chain_name, burnin, write_output = False, path = "", min_omega = 
     gene_maxposom = dict()
     gene_posom_sample = dict()
 
+    alpha = 0.05
     for i,gene in enumerate(gene_list):
         gene_postselprob[gene] = mean([(float(sample[i]) > min_omega) for sample in posom_mcmc])
         gene_meanposom[gene] = mean([float(sample[i]) for sample in posom_mcmc])
         gene_posom_sample[gene] = [float(sample[i]) for sample in posom_mcmc]
         sorted_posom_sample = sorted(gene_posom_sample[gene])
         size = len(sorted_posom_sample)
-        minindex = int(0.025 * size)
-        maxindex = int(0.975 * size)
+        minindex = int(alpha / 2 * size)
+        maxindex = int((1 - alpha) / 2 * size)
         gene_minposom[gene] = sorted_posom_sample[minindex]
         gene_maxposom[gene] = sorted_posom_sample[maxindex]
 
