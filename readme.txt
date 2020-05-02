@@ -1,98 +1,81 @@
+******************************
 
-# based on externally given data and tree,
-# creates a new folder for the experiment: exp_folder
-# a subfolder called original_data, for the sub-experiment (analyses on original data)
-# within it, a list of genes and a tree
+Simulation experiments for m2a
 
-new_experiment data_folder gene_file taxon_file tree_file exp_folder
+******************************
 
-# given an experiment/subexperiment path, with data already formatted in it
-# create codeml data
-# create codeml scripts
-# create bayes single and multi gene data folders
-# calls prepare_codeml prepare_m2adata prepare_m2arun
-# or do it at once
+General idea: starting from a set of genes, a tree and a taxon list
+- analyse data with m2a model, using either codeml or bayescode, single-gene (m2a) and multi-gene (mm2a) version,
+  and under various priors
+- based on these analyses, re-simulate data
+  (using either m2a or mm2a,
+  possibly modulating prevalence of pos-sel and effect sizes for single-gene re-simulations,
+  and either linking or shrinking branch lengths and nuc rates across genes for multi-gene re-simulations)
+- re-analyse simulated data
+- comparing estimates under the three approaches and the alternative priors with true values
+  tabulate fdr, etc.
 
-prepare_subexperiment experiment/subexperiment
+This multi-step analysis is conducted through the following sequence of 5 python scripts
+(+ a few interventions inbetween, for running analyses on cluster):
 
-run_m2a experiment/subexperiment options basename (batchmode?)
-run_codeml
-run_mm2a
+# step1_empruns.py <data_folder> <gene_file> <tree_file> <exp_folder>
+
+starting from a list of single-gene alignments contained in a data folder, a tree and a target name for the experiment:
+- creates an experiment folder, with subexperiment folder (called 'empirical'), containing reformatted data
+- in 'empirical', prepare data (formatted for codeml, m2a, mm2a) and scripts for running analyses 
+- in the case of mm2a: prepares script for the posterior predictive analysis (to run after mcmc)
+
+-> submit jobs for all analyses under codeml, m2a, m2a;
+   all scripts (.sh) are in the subfolders named codeml, m2a and mm2a in <exp_folder>/empirical/
+-> once runs are completed, submit jobs for ppred analyses for mm2a
+   (scripts in mm2a subfolder in <exp_folder>/empirical)
 
 
-starting point:
+# step2_emppost.py <exp_folder>
 
-a data folder with a set of single-gene alignments
-a taxon list
-a tree
+post-analysis of all runs on empirical data. Produces summary files:
+- .sortedparams  : main results tabulated across methods for all genes sorted by decreasing DlnL (codeml)
+- .hyper         : median and 95CI for hyperparameters
+- .genefdr       : posterior estimate of FDR
 
-a base folder for the project, with all scripts in it
 
-# make_experiment.py data_path gene_list taxon_list tree target_folder
-for a given gene list and a target folder:
-    make target folder
-    make a data folder in target folder
-    in this folder, and for each gene in genelist,
-    make minimal single-gene alignments, pruning out taxa not in taxon list
-    make subtree based on taxon list
+# step3_ppred.py <exp_folder>
 
-this gives a typical experiment folder with a data folder in it
-    in experiment folder
-        all.list: the list of genes
-        all.tree: a complete tree (spanning the union of all taxa across gene list)
-    in experiment/data folder:
-        the corresponding single gene alignments, codeml-readable
+re-simulation based on parameter values inferred at step 2, using a modified post pred approach
 
-(1) given and experiment folder and data folder in it, conduct following analyses:
+- single gene resimulations (using m2a and based on codeml and m2a output)
+  modulating number of genes under pos sel (cutoff applied on list of genes sorted by decreasing codeml dlnl)
+  -> 30%, 10%, 3% of all genes
+  modulating effect sizes: shrinking posw or dposom (or both) by a factor 0.3 or 0.1
 
-# prepare_codeml.py experiment_name
-codeml analyses
-    make a folder for codeml analyses
-    in this folder,
-    make minimal single-gene alignments and single-gene trees
-    make codeml ctl file and batch files
-    run codeml analyses
+- multi-gene re-simulations: simple post pred under mm2a (either shared or shrunken runs)
 
-single-gene bayescode analyses
-    make a folder for bayescode single-gene analyses
-    in this folder,
-    make codeml minimal single-gene alignments and single-gene trees, pruning out the taxa not in taxon list
-    under alternative priors (in same folder), make batches for single-gene m2a analyses
-    run those analyses
+each simulation settings creates its own subfolder in <exp_folder>, each containing simulated data and tree:
+simu03                      : 3% of genes under positive selection, effect sizes (posw dposom) based on m2a estimate
+simu10                      : 10% of genes under positive selection (effect sizes unmodified)
+simu30                      : 30% of genes under positive selection (effect sizes unmodified)
+simu30_shrink_dposom01      : 30% of genes under positive selection (dposom x 0.1)
+simu30_shrink_dposom03      : 30% of genes under positive selection (dposom x 0.3)
+simu30_shrink_posw01        : 30% of genes under positive selection (posw x 0.1)
+simu30_shrink_posw03        : 30% of genes under positive selection (posw x 0.3)
+simushared                  : post pred under mm2a, with all genes sharing same branch lengths and nucleotide rates
+simushrunken                : post pred under mm2a, with genes having different but similar branch lengths and nuc rates
 
-multi-gene bayescode analyses
-    make a folder for bayescode multi-gene analyses
-    in this folder,
-    make maximal single-gene alignments (all with complete set of taxa)
-    add complete tree in folder
-    under alternative priors, make batches for multi-gene m2a analyses
-    run those analyses
+# step4_simruns.py <exp_folder>
 
-post analyses
-    compare each bayescode single-gene and multi-gene analysis with codeml
-    (global comparison?)
-    with an option if true parameter values and true siteom are available
-    list genes in decreasing delta_lnl under codeml: this will be a reference list for simulations
+prepare scripts for running all analyses of re-simulated data (under all simulation settings)
 
-simulations
+-> again submit jobs for all analyses under codeml, m2a, m2a;
+   all scripts (.sh) are in the subfolders named codeml, m2a and mm2a in <exp_folder>/<simu_name>/
+   where <simu_name> is the name of a given re-simulation experiment
+-> once runs are completed, submit jobs for ppred analyses for mm2a
+   (scripts in mm2a subfolder in <exp_folder>/<simu_name>)
 
-    parameters:
-        the list of genes with decreasing delta_lnL
-        a threshold for delta_lnL
-        a basename
+# step5_simpost.py <exp_folder>
 
-    simulations based on codeml parameter values
-    output: a list of minimal single-gene alignments + complete tree + list + truesiteom and trueparam
-    -> in basename_codeml
-
-    post pred simulations based on bayescode single-gene analyses (under uninformative prior)
-    output: a list of minimal single-gene alignments + complete tree + list + truesiteom and trueparam
-    -> in basename_bayes_singlegene_options
-
-    post pred simulations based on multi-gene analyses (bl and nucrates jointly ind / shrunken / shared)
-    output: a list of maximal single-gene alignments, which should then be further reduced
-    -> in basename_bayse_multigene_options
-
-    each simulation this conducted produces a typical data folder, which can then be used to run the typical analysis
-    post analyses: can be compared with true values
+post analysis: comparing estimates under the three approaches with true values
+most important output:
+- .sortedparams
+- .hyper
+- .genefdr
 
