@@ -10,6 +10,15 @@ import parsem2a
 import parsemm2a
 import simuparams
 
+# exp_folder: subexperiment
+# single_basename: list of runs (under alternative priors) done with single-gene m2a
+# multi_basename: list of runs (under alternative priors) done with multi-gene mm2a
+# outname: base name for output
+# <outname>.sortedparams  : main results tabulated across methods for all genes sorted by decreasing DlnL (codeml)
+# <outname>.sitepp        : (deactivated) site BEB post probs
+# <outname>.hyper         : median and 95CI for hyperparameters
+# <outname>.genefdr       : posterior estimate of FDR
+
 def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a_postanalysis", single_burnin = 100, multi_burnin = 500, dlnlmin = 0, min_omega = 1.0, with_sites = False):
 
     cutoff_list = [0.1,0.3, 0.5, 0.7, 0.9]
