@@ -21,7 +21,7 @@ import simuparams
 
 def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a_postanalysis", single_burnin = 100, multi_burnin = 500, dlnlmin = 0, min_omega = 1.0, with_sites = False):
 
-    cutoff_list = [0.1,0.3, 0.5, 0.7, 0.9]
+    cutoff_list = [0.05, 0.1, 0.3, 0.5]
 
     exp_dir = exp_folder + "/"
     codeml_dir = exp_dir + "codeml/"
@@ -225,9 +225,10 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
     if fromsimu:
         truepos = trueposw
 
-    gene_codeml_fdr(score["codeml"], truepos, outname)
-    namelist2 = [name for name in namelist if name != "codeml"]
-    method_gene_fdr(cutoff_list, namelist2, score, truepos, outname)
+    # gene_codeml_fdr(score["codeml"], truepos, outname)
+    # namelist2 = [name for name in namelist if name != "codeml"]
+    # method_gene_fdr(cutoff_list, namelist2, score, truepos, outname)
+    method_gene_fdr(cutoff_list, namelist, score, truepos, outname)
 
     print("done")
 
