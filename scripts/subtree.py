@@ -1,4 +1,4 @@
-#! /usr/bin/python3.5
+#! /beegfs/data/soft/anaconda3/bin/python3.7
 from ete3 import Tree
 import sys
 
