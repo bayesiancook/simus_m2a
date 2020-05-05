@@ -9,9 +9,11 @@ def gene_codeml_fdr(cutoff_list, score, truepos, outname):
 
     gene_ndisc = dict()
     gene_fp = dict()
+    gene_fdr = dict()
     for cutoff in cutoff_list:
         gene_ndisc[cutoff] = 0
         gene_fp[cutoff] = 0
+        gene_fdr[cutoff] = 0
 
     ngene = len(score)
     fromsimu = len(truepos)
@@ -29,6 +31,7 @@ def gene_codeml_fdr(cutoff_list, score, truepos, outname):
         n = 0
         fp = 0
         tp = 0
+        fdr = 0
 
         for (gene,dlnl) in sorted(score.items(), key=lambda kv: kv[1], reverse=True):
 
@@ -55,13 +58,14 @@ def gene_codeml_fdr(cutoff_list, score, truepos, outname):
                         if efdr < cutoff:
                             gene_ndisc[cutoff] = n
                             gene_fp[cutoff] = fp
+                            gene_fdr[cutoff] = fdr
 
                 else:
                     outfile.write("{0:15s}\t{1:5.2f}\t{2:7.5f}\t{3:7.5f}\n".format(gene,dlnl,pval,efdr))
 
-    return [gene_ndisc, gene_fp]
+    return [gene_ndisc, gene_fdr, gene_fp]
 
-def gene_fdr(cutoff_list, score, truepos, outname):
+def bygene_fdr(cutoff_list, score, truepos, outname):
 
     ngene = len(score)
     fromsimu = len(truepos)
@@ -71,18 +75,20 @@ def gene_fdr(cutoff_list, score, truepos, outname):
     gene_ndisc = dict()
     gene_fp = dict()
     gene_etpr = dict()
+    gene_fdr = dict()
     for cutoff in cutoff_list:
         gene_ndisc[cutoff] = 0
         gene_fp[cutoff] = 0
         gene_etpr[cutoff] = 0
+        gene_fdr[cutoff] = 0
 
     with open(outname + ".genefdr", 'w') as outfile:
 
         # header
         if fromsimu:
-            outfile.write("{0:15s}\t{1:7s}\t{2:7s}\t{3:7s}\t{4:7s}\t{5:7s}\n".format("#gene", "pp", "e-tpr", "fdr", "tpr", "fpr"))
+            outfile.write("{0:15s}\t{1:7s}\t{2:7s}\t{3:7s}\t{4:7s}\t{5:7s}\t{6:7s}\n".format("#gene", "pp", "e-fdr", "e-tpr", "fdr", "tpr", "fpr"))
         else:
-            outfile.write("{0:15s}\t{1:7s}\t{2:7s}\n".format("gene", "pp", "e-tpr"))
+            outfile.write("{0:15s}\t{1:7s}\t{2:7s}\t{3.7s}\n".format("gene", "pp", "e-fdr", "e-tpr"))
 
         # estimated total number of positively selected genes
         etotp = sum([pp for (gene,pp) in score.items()])
@@ -121,8 +127,9 @@ def gene_fdr(cutoff_list, score, truepos, outname):
                     gene_ndisc[cutoff] = n
                     gene_fp[cutoff] = fp
                     gene_etpr[cutoff] = etpr
+                    gene_fdr[cutoff] = fdr
 
-    return [gene_ndisc, gene_fp, gene_etpr]
+    return [gene_ndisc, gene_fdr, gene_fp, gene_etpr]
 
 
 def method_gene_fdr(cutoff_list, namelist, score, truepos, outname):
@@ -135,12 +142,13 @@ def method_gene_fdr(cutoff_list, namelist, score, truepos, outname):
     gene_ndisc = dict()
     gene_fp = dict()
     gene_etpr = dict()
+    gene_fdr = dict()
 
     for name in namelist:
         if name == "codeml":
-            [gene_ndisc[name], gene_fp[name]] = gene_codeml_fdr(cutoff_list, score[name], truepos, outname + "_" + name);
+            [gene_ndisc[name], gene_fdr[name], gene_fp[name]] = gene_codeml_fdr(cutoff_list, score[name], truepos, outname + "_" + name);
         else:
-            [gene_ndisc[name], gene_fp[name], gene_etpr[name]] = gene_fdr(cutoff_list, score[name], truepos, outname + "_" + name);
+            [gene_ndisc[name], gene_fdr[name], gene_fp[name], gene_etpr[name]] = bygene_fdr(cutoff_list, score[name], truepos, outname + "_" + name);
 
     with open(outname + ".genefdr", 'w') as outfile:
 
@@ -168,7 +176,8 @@ def method_gene_fdr(cutoff_list, namelist, score, truepos, outname):
                 ndisc = gene_ndisc[name][cutoff]
                 if ndisc:
                     if fromsimu:
-                        fdr = gene_fp[name][cutoff] / ndisc
+                        fdr = gene_fdr[name][cutoff]
+
                         tpr = (ndisc - gene_fp[name][cutoff]) / ntrue
                         if name == "codeml":
                             outfile.write("  {0:5d} {1:5.2f} {2:^5s} {3:5.2f}".format(ndisc, fdr, "-", tpr))
@@ -184,3 +193,6 @@ def method_gene_fdr(cutoff_list, namelist, score, truepos, outname):
                             outfile.write("  {0:5d} {1:5.2f}".format(ndisc, etpr))
 
             outfile.write("\n")
+
+    return [gene_ndisc, gene_fdr]
+
