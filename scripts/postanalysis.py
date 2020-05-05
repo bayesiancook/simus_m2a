@@ -19,9 +19,10 @@ import simuparams
 # <outname>.hyper         : median and 95CI for hyperparameters
 # <outname>.genefdr       : posterior estimate of FDR
 
-def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a_postanalysis", single_burnin = 100, multi_burnin = 500, dlnlmin = 0, min_omega = 1.0, with_sites = False):
+default_cutoff_list = [0.05, 0.1, 0.3, 0.5]
 
-    cutoff_list = [0.05, 0.1, 0.3, 0.5]
+def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a_postanalysis", single_burnin = 100, multi_burnin = 500, dlnlmin = 0, min_omega = 1.0, with_sites = False, cutoff_list = default_cutoff_list):
+
 
     exp_dir = exp_folder + "/"
     codeml_dir = exp_dir + "codeml/"
@@ -228,7 +229,5 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
     # gene_codeml_fdr(score["codeml"], truepos, outname)
     # namelist2 = [name for name in namelist if name != "codeml"]
     # method_gene_fdr(cutoff_list, namelist2, score, truepos, outname)
-    method_gene_fdr(cutoff_list, namelist, score, truepos, outname)
-
-    print("done")
+    return method_gene_fdr(cutoff_list, namelist, score, truepos, outname)
 
