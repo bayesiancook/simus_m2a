@@ -1,5 +1,9 @@
 #! /usr/bin/python3.5
 
+#
+# post analysis of experiments on original empirical data
+# 
+
 import sys
 import os
 
