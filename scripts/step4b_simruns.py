@@ -25,12 +25,12 @@ with open(gene_file, 'r') as infile:
     ngene = len([line for line in infile])
 
 options = {
-        "uninfpi50mm2a" : "-x 1 1100 -nucrates ind -bl ind +G -pi 0.50 -purom 0.5 0.5 -dposom 10 1 -purw 0.5 0.5 -posw 0.5 0.5",
-        "uninfpi10mm2a" : "-x 1 1100 -nucrates ind -bl ind +G -pi 0.10 -purom 0.5 0.5 -dposom 10 1 -purw 0.5 0.5 -posw 0.5 0.5",
-        "uninfpi02mm2a" : "-x 1 1100 -nucrates ind -bl ind +G -pi 0.02 -purom 0.5 0.5 -dposom 10 1 -purw 0.5 0.5 -posw 0.5 0.5",
-        "subjpi50mm2a" : "-x 1 1100 -nucrates ind -bl ind +G -pi 0.50 -purom 0.5 0.5 -dposom 2 1 -purw 0.5 0.5 -posw 0.1 0.1",
-        "subjpi10mm2a" : "-x 1 1100 -nucrates ind -bl ind +G -pi 0.10 -purom 0.5 0.5 -dposom 2 1 -purw 0.5 0.5 -posw 0.1 0.1",
-        "subjpi02mm2a" : "-x 1 1100 -nucrates ind -bl ind +G -pi 0.02 -purom 0.5 0.5 -dposom 2 1 -purw 0.5 0.5 -posw 0.1 0.1"
+        "uninfpi50mm2a" : "-x 1 1100 -nucrates ind -bl ind +G -pi 0.50 0 -purom 0.5 0.5 -dposom 10 1 -purw 0.5 0.5 -posw 0.5 0.5",
+        "uninfpi10mm2a" : "-x 1 1100 -nucrates ind -bl ind +G -pi 0.10 0 -purom 0.5 0.5 -dposom 10 1 -purw 0.5 0.5 -posw 0.5 0.5",
+        "uninfpi02mm2a" : "-x 1 1100 -nucrates ind -bl ind +G -pi 0.02 0 -purom 0.5 0.5 -dposom 10 1 -purw 0.5 0.5 -posw 0.5 0.5",
+        "subjpi50mm2a" : "-x 1 1100 -nucrates ind -bl ind +G -pi 0.50 0 -purom 0.5 0.5 -dposom 2 1 -purw 0.5 0.5 -posw 0.1 0.1",
+        "subjpi10mm2a" : "-x 1 1100 -nucrates ind -bl ind +G -pi 0.10 0 -purom 0.5 0.5 -dposom 2 1 -purw 0.5 0.5 -posw 0.1 0.1",
+        "subjpi02mm2a" : "-x 1 1100 -nucrates ind -bl ind +G -pi 0.02 0 -purom 0.5 0.5 -dposom 2 1 -purw 0.5 0.5 -posw 0.1 0.1"
 }
 
 for simu in simu_list:
@@ -52,7 +52,7 @@ for simu in simu_list:
 
     (pi, purw_mean, purw_var, purw_invconc, posw_mean, posw_var, posw_invconc, purom_mean, purom_var, purom_invconc, dposom_mean, dposom_var, dposom_invshape) = get_empirical_moments(simu_folder)
 
-    infmm2a_options= "-x 1 1100 -nucrates ind -bl ind +G -pi {0} -purom {1} {2} -dposom {3} {4} -purw {5} {6} -posw {7} {8}".format(pi, purom_mean, purom_invconc, dposom_mean, dposom_invshape, purw_mean, purw_invconc, posw_mean, posw_invconc)
+    infmm2a_options= "-x 1 1100 -nucrates ind -bl ind +G -pi {0} 0 -purom {1} {2} -dposom {3} {4} -purw {5} {6} -posw {7} {8}".format(pi, purom_mean, purom_invconc, dposom_mean, dposom_invshape, purw_mean, purw_invconc, posw_mean, posw_invconc)
 
     runmm2a(simu_folder, infmm2a_options, "infmm2a", machine="p2chpd", queue="parallel", nodes=nodes, core=core, time=24, mem=16, path2batch = simu_folder + "/multigene2/", path2run = path2bayescode_p2chpd)
 
