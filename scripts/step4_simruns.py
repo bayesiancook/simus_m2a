@@ -1,5 +1,9 @@
 #! /usr/bin/python3.5
 
+#
+# codeml, single- and multi-gene bayesian analyses on simulated data
+# 
+
 import sys
 import os
 
