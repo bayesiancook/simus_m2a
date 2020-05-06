@@ -15,7 +15,7 @@ fdr_cutoff_list = [0.05, 0.1, 0.3, 0.5]
 # post analysis 
 
 multi_basename = ["unconsindmm2a", "indmm2a", "unconsshrunkenmm2a", "shrunkenmm2a", "sharedmm2a"]
-namelist = ["codeml"] + multi_basename
+namelist = ["df1_codeml", "df2_codeml", "mixdf1_codeml"] + multi_basename
 
 simu_list = ["simu30", "simu10", "simu03", "simu30_shrink_dposom03", "simu30_shrink_dposom01", "simu30_shrink_posw03", "simu30_shrink_posw01", "simushrunken", "simushared"]
 
@@ -54,7 +54,7 @@ with open(res_dir + "fdrtable.tex", 'w') as outfile:
 
         for name in namelist:
 
-            if name == "codeml":
+            if name[-6:] == "codeml":
                 outfile.write("{0:>18s}".format(simu.replace("_", "\\_")))
 
             outfile.write("&{0:>18s}".format(name))

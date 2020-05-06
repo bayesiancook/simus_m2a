@@ -226,8 +226,5 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
     if fromsimu:
         truepos = trueposw
 
-    # gene_codeml_fdr(score["codeml"], truepos, outname)
-    # namelist2 = [name for name in namelist if name != "codeml"]
-    # method_gene_fdr(cutoff_list, namelist2, score, truepos, outname)
     return method_gene_fdr(cutoff_list, namelist, score, truepos, outname)
 

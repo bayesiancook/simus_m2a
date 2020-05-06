@@ -5,7 +5,8 @@ import numpy
 import os
 from scipy.stats import chi2
 
-def gene_codeml_fdr(cutoff_list, score, truepos, outname):
+# chi_mode: df2 (chi2 with 2 df) or mixdf1 (mix of 0.5 point mass at 0 and 0.5 chi2 with 1df)
+def gene_codeml_fdr(cutoff_list, score, truepos, outname, chi_mode = "df2"):
 
     gene_ndisc = dict()
     gene_fp = dict()
@@ -37,7 +38,14 @@ def gene_codeml_fdr(cutoff_list, score, truepos, outname):
 
             if dlnl>0:
                 n = n + 1
-                pval = (1 - chi2.cdf(2*dlnl,1))/2
+                pval = 0
+                if chi_mode == "df2":
+                    pval = 1 - chi2.cdf(2*dlnl,2)
+                else:
+                    if chi_mode == "df1":
+                        pval = 1 - chi2.cdf(2*dlnl,1)
+                    else:
+                        pval = (1 - chi2.cdf(2*dlnl,1))/2
                 efdr = ngene*pval/n
                 if efdr > 1:
                     efdr = 1
@@ -146,7 +154,9 @@ def method_gene_fdr(cutoff_list, namelist, score, truepos, outname):
 
     for name in namelist:
         if name == "codeml":
-            [gene_ndisc[name], gene_fdr[name], gene_fp[name]] = gene_codeml_fdr(cutoff_list, score[name], truepos, outname + "_" + name);
+            [gene_ndisc["mixdf1_codeml"], gene_fdr["mixdf1_codeml"], gene_fp["mixdf1_codeml"]] = gene_codeml_fdr(cutoff_list, score["codeml"], truepos, outname + "_" + "mixdf1", chi_mode = "mixdf1");
+            [gene_ndisc["df1_codeml"], gene_fdr["df1_codeml"], gene_fp["df1_codeml"]] = gene_codeml_fdr(cutoff_list, score["codeml"], truepos, outname + "_" + "df1", chi_mode = "df1");
+            [gene_ndisc["df2_codeml"], gene_fdr["df2_codeml"], gene_fp["df2_codeml"]] = gene_codeml_fdr(cutoff_list, score["codeml"], truepos, outname + "_" + "df2", chi_mode = "df2");
         else:
             [gene_ndisc[name], gene_fdr[name], gene_fp[name], gene_etpr[name]] = bygene_fdr(cutoff_list, score[name], truepos, outname + "_" + name);
 
@@ -168,7 +178,8 @@ def method_gene_fdr(cutoff_list, namelist, score, truepos, outname):
                 outfile.write("  {0:>5s} {1:>5s}".format("disc", "etpr"))
         outfile.write("\n")
 
-        for name in namelist:
+        namelist2 = ["df1_codeml", "df2_codeml", "mixdf1_codeml"] + [name for name in namelist if name != "codeml"]
+        for name in namelist2:
 
             outfile.write("{0:>18s}".format(name))
 
@@ -177,16 +188,15 @@ def method_gene_fdr(cutoff_list, namelist, score, truepos, outname):
                 if ndisc:
                     if fromsimu:
                         fdr = gene_fdr[name][cutoff]
-
                         tpr = (ndisc - gene_fp[name][cutoff]) / ntrue
-                        if name == "codeml":
+                        if name[-6:] == "codeml":
                             outfile.write("  {0:5d} {1:5.2f} {2:^5s} {3:5.2f}".format(ndisc, fdr, "-", tpr))
                         else:
                             etpr = gene_etpr[name][cutoff]
                             outfile.write("  {0:5d} {1:5.2f} {2:5.2f} {3:5.2f}".format(ndisc, fdr, etpr, tpr))
 
                     else:
-                        if name == "codeml":
+                        if name[-6:] == "codeml":
                             outfile.write("  {0:5d} {1:^5s}".format(ndisc, "-"))
                         else:
                             etpr = gene_etpr[name][cutoff]
