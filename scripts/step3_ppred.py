@@ -1,5 +1,20 @@
 #! /usr/bin/python3.5
 
+#
+# post pred runs (in direct mode, not submission on queue)
+# based on analyses of empirical data under single-gene model, uninfm2a options
+#
+# post pred on multi gene runs: scripts already produced at step1
+# here: assume that those scripts have already been run but still has to format the output
+# 
+# then: prepare the subexperiment folders 
+# 
+# for simu30 simu10 simu03:  
+#   prepare folders for codeml, single-gene and multi-gene analyses
+#
+# for all other simulations
+#   prepare folders for codeml and multi-gene analyses
+
 import sys
 import os
 
@@ -33,8 +48,7 @@ multi_gene_postpred(emp_folder, "shrunkenmm2a", exp_dir + "simushrunken")
 # prepare subexperiment folders
 
 for simu in ["simu30", "simu10", "simu03"]:
-    # prepare_subexperiment(exp_dir + simu, prep_single = True)
-    prepare_subexperiment(exp_dir + simu, prep_single = False)
+    prepare_subexperiment(exp_dir + simu, prep_single = True)
 
 for simu in ["simu30_shrink_dposom03", "simu30_shrink_dposom01", "simu30_shrink_posw03", "simu30_shrink_posw01"]:
     prepare_subexperiment(exp_dir + simu, prep_single = False)
