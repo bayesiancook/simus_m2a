@@ -75,12 +75,12 @@ subjpi02m2a_options= "-x 1 600 -pi 0.02 -purom 0.5 0.5 -dposom 2 1 -purw 0.5 0.5
 
 # make scripts for job submission
 runm2a(emp_folder, uninfm2a_options, "uninfm2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
-runm2a(emp_folder, uninfm2a_options, "uninfpi50m2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
-runm2a(emp_folder, uninfm2a_options, "uninfpi10m2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
-runm2a(emp_folder, uninfm2a_options, "uninfpi02m2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
-runm2a(emp_folder, uninfm2a_options, "subjpi50m2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
-runm2a(emp_folder, uninfm2a_options, "subjpi10m2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
-runm2a(emp_folder, uninfm2a_options, "subjpi02m2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
+runm2a(emp_folder, uninfpi50m2a_options, "uninfpi50m2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
+runm2a(emp_folder, uninfpi10m2a_options, "uninfpi10m2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
+runm2a(emp_folder, uninfpi02m2a_options, "uninfpi02m2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
+runm2a(emp_folder, subjpi50m2a_options, "subjpi50m2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
+runm2a(emp_folder, subjpi10m2a_options, "subjpi10m2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
+runm2a(emp_folder, subjpi02m2a_options, "subjpi02m2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
 
 # multi gene bayescode
 
