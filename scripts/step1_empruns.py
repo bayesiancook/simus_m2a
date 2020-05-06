@@ -2,6 +2,7 @@
 
 #
 # experiments on original empirical data
+# also: prepare ppred scripts for multigene data
 # 
 
 import sys
