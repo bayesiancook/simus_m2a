@@ -4,7 +4,7 @@ import sys
 import os
 from numpy import mean
 from numpy import product
-from fdr import bygene_fdr
+from fdr import gene_bayes_fdr
 
 def parse_list(chain_name, burnin, with_sites = True, write_output = False, path = "", min_omega = 1.0) :
 
@@ -225,7 +225,7 @@ if __name__ == "__main__":
     [score, posw, posom, minposom, maxposom, selectedsites, sitepp, score2, score3, hyperparams] = res[0:10]
     truepos = dict()
     cutoff_list = [0.5, 0.7, 0.9]
-    [gene_ndisc, gene_fdr, gene_fp, gene_efdr, gene_etpr] = bygene_fdr(cutoff_list, score, truepos, chain_name)
+    [gene_ndisc, gene_fdr, gene_fp, gene_efdr, gene_etpr] = gene_bayes_fdr(cutoff_list, score, truepos, chain_name)
 
     with open(chain_name + ".genefdr", 'w') as outfile:
         outfile.write("{0:5s} {1:5s} {2:5s} {3:5s}\n".format("c", "ndisc", "efdr", "etpr"))

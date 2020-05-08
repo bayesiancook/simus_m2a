@@ -5,7 +5,16 @@ import numpy
 import os
 from scipy.stats import chi2
 
-# chi_mode: df2 (chi2 with 2 df) or mixdf1 (mix of 0.5 point mass at 0 and 0.5 chi2 with 1df)
+# based on list of dlnl from codeml, compute p-value and apply BH algorithm
+# returns, for a series of target FDR thresholds:
+# - number of discoveries, 
+# - number of false positives among them
+#
+# assumed null distribution for computing p-values:
+# - chi_mode = df1    : chi2 with 1 df
+# - chi_mode = df2    : chi2 with 2 df
+# - chi_mode = mixdf1 : mix of 0.5 point mass at 0 and 0.5 chi2 with 1df
+
 def gene_codeml_fdr(cutoff_list, score, truepos, outname, chi_mode = "df2"):
 
     gene_ndisc = dict()
@@ -77,7 +86,7 @@ def gene_codeml_fdr(cutoff_list, score, truepos, outname, chi_mode = "df2"):
 
     return [gene_ndisc, gene_fdr, gene_fp]
 
-def bygene_fdr(cutoff_list, score, truepos, outname):
+def gene_bayes_fdr(cutoff_list, score, truepos, outname):
 
     ngene = len(score)
     fromsimu = len(truepos)
@@ -163,7 +172,7 @@ def method_gene_fdr(cutoff_list, namelist, score, truepos, outname):
             [gene_ndisc["df1_codeml"], gene_fdr["df1_codeml"], gene_fp["df1_codeml"]] = gene_codeml_fdr(cutoff_list, score["codeml"], truepos, outname + "_" + "df1", chi_mode = "df1");
             [gene_ndisc["df2_codeml"], gene_fdr["df2_codeml"], gene_fp["df2_codeml"]] = gene_codeml_fdr(cutoff_list, score["codeml"], truepos, outname + "_" + "df2", chi_mode = "df2");
         else:
-            [gene_ndisc[name], gene_fdr[name], gene_fp[name], gene_etpr[name]] = bygene_fdr(cutoff_list, score[name], truepos, outname + "_" + name);
+            [gene_ndisc[name], gene_fdr[name], gene_fp[name], gene_etpr[name]] = gene_bayes_fdr(cutoff_list, score[name], truepos, outname + "_" + name);
 
     with open(outname + ".genefdrtpr", 'w') as outfile:
 
