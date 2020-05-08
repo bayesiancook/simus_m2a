@@ -13,6 +13,8 @@ exp_folder = sys.argv[1]
 emp_folder = exp_folder + "/empirical"
 res_folder = exp_folder + "/results"
 
+fdr_cutoff_list = [0.05, 0.1, 0.3, 0.5]
+
 if not os.path.exists(res_folder):
     print("creating results folder")
     os.system("mkdir " + res_folder)
@@ -22,5 +24,30 @@ if not os.path.exists(res_folder):
 single_basename = ["uninfm2a", "uninfpi50m2a", "uninfpi10m2a", "uninfpi02m2a", "subjpi50m2a", "subjpi10m2a", "subjpi02m2a"]
 multi_basename = ["indmm2a", "shrunkenmm2a", "sharedmm2a", "unconsindmm2a", "unconsshrunkenmm2a"]
 
-m2a_postanalysis(emp_folder, single_basename, multi_basename, outname = exp_folder + "/results/emp")
+[method_ndisc, method_fdr] = m2a_postanalysis(emp_folder, single_basename, multi_basename, outname = exp_folder + "/results/emp")
+
+namelist = ["df1_codeml", "df2_codeml", "mixdf1_codeml"] + single_basename + multi_basename
+
+with open(res_folder + "/emp.summary", 'w') as outfile:
+
+    outfile.write("{0:>18s}".format(""))
+    for cutoff in fdr_cutoff_list:
+        outfile.write("   {0:^5.2f}".format(cutoff))
+    outfile.write("\n")
+
+    outfile.write("{0:>18s}".format(""))
+    for cutoff in fdr_cutoff_list:
+        outfile.write("  {0:>5s}".format("disc"))
+    outfile.write("\n")
+
+    for name in namelist:
+
+        outfile.write("{0:>18s}".format(name))
+
+        for cutoff in fdr_cutoff_list:
+            ndisc = method_ndisc[name][cutoff]
+            fdr = method_fdr[name][cutoff]
+            outfile.write("  {0:5d}".format(ndisc))
+
+        outfile.write("\n")
 

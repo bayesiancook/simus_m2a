@@ -16,7 +16,8 @@ single_basename = ["infm2a", "uninfpi50m2a", "uninfpi10m2a", "uninfpi02m2a", "su
 
 multi_basename = ["unconsindmm2a", "unconsshrunkenmm2a", "indmm2a", "shrunkenmm2a", "sharedmm2a"]
 
-simu_list = ["simu30", "simu10", "simu03"]
+simu_list = ["simu10"]
+# simu_list = ["simu30", "simu10", "simu03"]
 
 for simu in simu_list:
     print(simu)

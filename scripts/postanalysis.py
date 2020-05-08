@@ -21,7 +21,7 @@ import simuparams
 
 default_cutoff_list = [0.05, 0.1, 0.3, 0.5]
 
-def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a_postanalysis", single_burnin = 100, multi_burnin = 500, dlnlmin = 0, min_omega = 1.0, with_sites = False, cutoff_list = default_cutoff_list):
+def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a_postanalysis", single_burnin = 100, multi_burnin = 500, dlnlmin = 0, dlnlmax = 0, min_omega = 1.0, with_sites = False, refname = "indmm2a", genepp_cutoff = 0.5, sitepp_cutoff = 0.90, cutoff_list = default_cutoff_list):
 
 
     exp_dir = exp_folder + "/"
@@ -76,14 +76,13 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
     sitepp = dict()
     hyperparams = dict()
 
-    namelist = []
+    namelist = ["codeml"] + single_basename + multi_basename;
 
     print("parsing codeml")
     # parsing codeml results
     name = "codeml"
     codeml_res = parsecodeml.parse_list(codeml_dir, genelist)
     [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name]] = codeml_res[0:7]
-    namelist.append(name)
 
     print("parsing single gene analyses")
     # parsing m2a results
@@ -91,7 +90,6 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
         print(name)
         single_res = parsem2a.parse_list(name, genelist, single_burnin, path=single_dir, min_omega = min_omega)
         [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name], score2[name], score3[name]] = single_res[0:9]
-        namelist.append(name)
 
     print("parsing multi gene analyses")
     # parsing mm2a results
@@ -99,7 +97,6 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
         print(name)
         multi_res = parsemm2a.parse_list(name, multi_burnin, path=multi_dir, with_sites = with_sites)
         [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name], score2[name], score3[name], hyperparams[name]] = multi_res[0:10]
-        namelist.append(name)
 
     print("printing out sorted list in .sortedparams")
 
@@ -178,20 +175,171 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
             #                geneoutfile.write(" ({0:2d} ; {1:3.1f})".format(tdr[cutoff][name][gene], etdr[cutoff][name][gene]))
             geneoutfile.write("\n")
 
-    #with open(outname + ".sitepp", 'w') as siteoutfile:
+    #
+    # site pps (against true status if available)
+    #
 
-        #
-        # gene list in decreasing order of dlnl
-        #
+    if with_sites:
 
-    #    for (gene,lnl) in sorted(codeml_dlnl.items(), key=lambda kv: kv[1], reverse=True):
-    #        if lnl >= dlnlmin:
-    #            for (i,pp) in selectedsites["codeml"][gene].items():
-    #                siteoutfile.write("{0}\t{1}\t{2}".format(gene,i+1,pp))
-    #                for name in namelist:
-    #                    if name != "codeml":
-    #                        siteoutfile.write("\t{0}".format(sitepp[name][gene][i]))
-    #                siteoutfile.write("\n")
+        codeml_gene_set = []
+        bayes_gene_set = []
+
+        # for each gene
+        # take all sites selected by codeml
+        # sort their pp
+        # for a given fdr cutoff: 0.95 / 0.90
+        # count number of sites selected 
+        # compute true fdr for each method
+        # output: gene name, dlnl, p-value, gene pp, (#sites, #fdr) for codeml and bayes
+
+        with open(outname + ".genesitepp", 'w') as outfile:
+            for (gene,lnl) in sorted(codeml_dlnl.items(), key=lambda kv: kv[1], reverse=True):
+                if dlnlmax == 0 or lnl <= dlnlmax:
+                    if lnl >= dlnlmin:
+                        codeml_gene_set.append(gene)
+                    if score[refname][gene] > genepp_cutoff:
+                        bayes_gene_set.append(gene)
+
+            both_gene_set = [gene for gene in codeml_gene_set if gene in bayes_gene_set]
+            codeml_not_bayes = [gene for gene in codeml_gene_set if gene not in bayes_gene_set]
+            bayes_not_codeml = [gene for gene in bayes_gene_set if gene not in codeml_gene_set]
+
+            outfile.write("codeml cutoff: {0}\n".format(dlnlmin))
+            outfile.write("bayes cutoff: {0}\n".format(genepp_cutoff))
+            outfile.write("#genes by codeml: {0}\n".format(len(codeml_gene_set)))
+            outfile.write("#genes by bayes: {0}\n".format(len(bayes_gene_set)))
+            outfile.write("#genes by both: {0}\n".format(len(both_gene_set)))
+            outfile.write("\n")
+
+            # number of sites selected by codeml
+            # fdr over those sites
+            # mean codeml site pp over those sites
+            c_n = 0
+            c_fdr = 0
+            c_meansitepp = 0
+
+            # number of sites selected by bayes
+            # fdr over those sites
+            # mean bayes site pp over those sites
+            b_n = 0
+            b_fdr = 0
+            b_meansitepp = 0
+
+            # number of sites selected by codeml but not by bayes
+            # fdr over those sites
+            # mean codeml site pp over those sites
+            # mean bayes site pp over those sites
+            cb_n = 0
+            cb_fdr = 0
+            cbc_meansitepp = 0
+            cbb_meansitepp = 0
+
+            # number of sites selected by bayes but not by codeml
+            # fdr over those sites
+            # mean codeml site pp over those sites
+            # mean bayes site pp over those sites
+            bc_n = 0
+            bc_fdr = 0
+            bcc_meansitepp = 0
+            bcb_meansitepp = 0
+
+            for gene in both_gene_set:
+                for (i,c_pp) in selectedsites["codeml"][gene].items():
+
+                    b_pp = sitepp[refname][gene][i]
+                    notpos = truesiteom[gene][i] == 1.0
+
+                    if c_pp > sitepp_cutoff:
+                        c_n = c_n + 1
+                        c_meansitepp = c_meansitepp + c_pp
+                        if notpos:
+                            c_fdr = c_fdr + 1
+
+                    if b_pp > sitepp_cutoff:
+                        b_n = b_n + 1
+                        b_meansitepp = b_meansitepp + b_pp
+                        if notpos:
+                            b_fdr = b_fdr + 1
+
+                    if c_pp > sitepp_cutoff and b_pp <= sitepp_cutoff:
+                        cb_n = cb_n + 1
+                        cbc_meansitepp = cbc_meansitepp + c_pp
+                        cbb_meansitepp = cbb_meansitepp + b_pp
+                        if notpos:
+                            cb_fdr = cb_fdr + 1
+                        
+                    if b_pp > sitepp_cutoff and c_pp <= sitepp_cutoff:
+                        bc_n = bc_n + 1
+                        bcc_meansitepp = bcc_meansitepp + c_pp
+                        bcb_meansitepp = bcb_meansitepp + b_pp
+                        if notpos:
+                            bc_fdr = bc_fdr + 1
+
+            c_meansitepp = c_meansitepp / c_n
+            c_fdr = c_fdr / c_n
+
+            b_meansitepp = b_meansitepp / b_n
+            b_fdr = b_fdr / b_n
+
+            if cb_n:
+                cbc_meansitepp = cbc_meansitepp / cb_n
+                cbb_meansitepp = cbb_meansitepp / cb_n
+                cb_fdr = cb_fdr / cb_n
+
+            if bc_n:
+                bcc_meansitepp = bcc_meansitepp / bc_n
+                bcb_meansitepp = bcb_meansitepp / bc_n
+                bc_fdr = bc_fdr / bc_n
+
+            outfile.write("{0} sites found by codeml\n".format(c_n))
+            outfile.write("fdr : {0}\n".format(c_fdr))
+            outfile.write("codeml e-fdr : {0}\n".format(1-c_meansitepp))
+            outfile.write("\n")
+
+            outfile.write("{0} sites found by bayes\n".format(b_n))
+            outfile.write("fdr : {0}\n".format(b_fdr))
+            outfile.write("bayes e-fdr : {0}\n".format(1-b_meansitepp))
+            outfile.write("\n")
+
+            outfile.write("{0} sites found by codeml but not bayes\n".format(cb_n))
+            outfile.write("fdr : {0}\n".format(cb_fdr))
+            outfile.write("codeml e-fdr : {0}\n".format(1-cbc_meansitepp))
+            outfile.write("bayes e-fdr : {0}\n".format(1-cbb_meansitepp))
+            outfile.write("\n")
+
+            outfile.write("{0} sites found by bayes but not codeml\n".format(bc_n))
+            outfile.write("fdr : {0}\n".format(bc_fdr))
+            outfile.write("bayes e-fdr : {0}\n".format(1-bcb_meansitepp))
+            outfile.write("codeml e-fdr : {0}\n".format(1-bcc_meansitepp))
+            outfile.write("\n")
+
+        with open(outname + ".compsitepp", 'w') as siteoutfile:
+            siteoutfile.write("{0:15s}{1:5s}".format("gene", "site"))
+            for name in namelist:
+                siteoutfile.write("    {0:6s}".format("g_" + name))
+            if fromsimu:
+                siteoutfile.write("   {0:5s}".format("trueom"))
+            for name in namelist:
+                siteoutfile.write("   {0:5s}".format("s_" + name))
+            siteoutfile.write("\n")
+
+            for (gene,lnl) in sorted(codeml_dlnl.items(), key=lambda kv: kv[1], reverse=True):
+                if score[refname][gene] > genepp_cutoff:
+                # if lnl >= dlnlmin:
+
+                    for (i,pp) in selectedsites["codeml"][gene].items():
+                        siteoutfile.write("{0:15s}".format(gene))
+                        siteoutfile.write("{0:5d}".format(i+1))
+                        for name in namelist:
+                            siteoutfile.write("   {0:6.2f}".format(score[name][gene]))
+                        if fromsimu:
+                            siteoutfile.write("  {0:5.2f}".format(truesiteom[gene][i]))
+                        siteoutfile.write("  {0:5.2f}".format(pp))
+                        for name in namelist:
+                            if name != "codeml":
+                                siteoutfile.write("  {0:5.2f}".format(sitepp[name][gene][i]))
+                        siteoutfile.write("\n")
+
 
     hypernamelist = ['purom_mean', 'purom_invconc', 'dposom_mean', 'dposom_invshape', 'purw_mean', 'purw_invconc', 'posw_mean', 'posw_invconc', 'pi']
 
