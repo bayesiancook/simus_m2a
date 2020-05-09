@@ -213,11 +213,13 @@ def parse_list(codeml_dir, gene_list, write_output = False):
     maxposom = dict()
     selectedsites = dict()
     sitepp = dict()
+    oma = dict()
 
     for gene in gene_list:
         res = parse(codeml_dir + gene + ".codeml")
         [score[gene], posw[gene], posom[gene], minposom[gene], maxposom[gene], selectedsites[gene], sitepp[gene]] = res[0:7]
-
+        oma[gene] = posw[gene] * (posom[gene]-1)
+        
     if write_output:
         with open(chain_name + ".postanalysis", 'w') as outfile:
             outfile.write("gene\tpp\tposw\tom\tmin\tmax")
@@ -230,7 +232,7 @@ def parse_list(codeml_dir, gene_list, write_output = False):
                     outfile.write("\t{0}".format(sitepp[gene]))
                 outfile.write("\n")
 
-    return [score, posw, posom, minposom, maxposom, selectedsites, sitepp]
+    return [score, posw, posom, minposom, maxposom, selectedsites, sitepp, oma]
 
 if __name__ == "__main__":
 

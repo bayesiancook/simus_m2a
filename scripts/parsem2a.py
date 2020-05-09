@@ -19,9 +19,14 @@ def parse(chain_name, burnin, path = "", min_omega = 1.0) :
             line = chain_file.readline()
 
         mcmc = [line.rstrip('\n').split()[0:4] for line in chain_file]
-        posw_sample = [float(sample[3]) for sample in mcmc]
+        purom_sample = [float(sample[0]) for sample in mcmc]
         dposom_sample = [float(sample[1]) for sample in mcmc]
+        purw_sample = [float(sample[2]) for sample in mcmc]
+        posw_sample = [float(sample[3]) for sample in mcmc]
         sorted_dposom_sample = sorted(dposom_sample)
+
+        # meanom = mean([ (1-pos)*(purw_sample[i]*purom_sample[i] + (1-purw_sample[i])) + pos*(1 + dposom_sample[i]) for i,pos in enumerate(posw_sample)])
+        meanoma = mean([pos*dposom_sample[i] for i,pos in enumerate(posw_sample)])
 
         meanposw = mean(posw_sample)
         postselprob = mean([val > 0 for val in posw_sample])
@@ -74,7 +79,7 @@ def parse(chain_name, burnin, path = "", min_omega = 1.0) :
     if path != "":
         os.chdir(current_dir)
 
-    return [postselprob, meanposw, meanposom, minposom, maxposom, sel, sitepp, postselprob2, postselprob3]
+    return [postselprob, meanposw, meanposom, minposom, maxposom, sel, sitepp, postselprob2, postselprob3, meanom, meanoma]
 
 def parse_list(basename, gene_list, burnin, path = "", min_omega = 1):
 
@@ -87,20 +92,62 @@ def parse_list(basename, gene_list, burnin, path = "", min_omega = 1):
     maxposom = dict()
     selectedsites = dict()
     sitepp = dict()
+    meanom = dict()
+    meanoma = dict()
+
+    ngene = len(gene_list)
+    nsite = dict()
 
     for gene in gene_list:
         res = parse(basename + gene, burnin, path=path, min_omega = min_omega)
-        [score[gene], posw[gene], posom[gene], minposom[gene], maxposom[gene], selectedsites[gene], sitepp[gene], score2[gene], score3[gene]] = res
+        [score[gene], posw[gene], posom[gene], minposom[gene], maxposom[gene], selectedsites[gene], sitepp[gene], score2[gene], score3[gene], meanom[gene], meanoma[gene]] = res
+        nsite[gene] = len(sitepp[gene])
 
-    return [score, posw, posom, minposom, maxposom, selectedsites, sitepp, score2, score3]
+    totnsite = sum([ns for (gene,ns) in nsite.items()])
+    grandtotom = sum([om*nsite[gene] for (gene,om) in meanom.items()])
+    grandtotoma = sum([oma*nsite[gene] for (gene,oma) in meanoma.items()])
+    grandmeanom = grandtotom / totnsite
+    grandmeanoma = grandtotoma / totnsite
+    grandmeanalpha = grandmeanoma / grandmeanom
+
+    with open(basename + ".meanoma", 'w') as os:
+        os.write("omega_tot : {0}\n".format(grandmeanom))
+        os.write("omega_a   : {0}\n".format(grandmeanoma))
+        os.write("alpha     : {0}\n".format(grandmeanalpha))
+
+    with open(basename + ".sorted_oma", 'w') as outfile:
+
+        tota = 0
+        n = 0
+        outfile.write("{0:18s}  {1:5s}  {2:5s}  {3:5s}  {4:5s}  {5:5s}  {6:5s}  {7:5s}  {8:5s}  {9:5s}\n".format("gene", "nsite", "om_tot", "om_a", "alpha", "%oma", "%genes", "pp", "p+", "om+"))
+
+        for (gene,oma) in sorted(meanoma.items(), key=lambda kv: kv[1], reverse=True):
+            a = oma * nsite[gene]
+            tota = tota + a
+            n = n + 1
+            om = meanom[gene]
+            alpha = oma / om
+            outfile.write("{0:18s}  {1:5d}  {2:5.3f}  {3:5.3f}  {4:5.3f}  {5:5.2f}  {6:5.2f}  {7:5.2f}  {8:5.3f}  {9:5.3f}\n".format(
+                gene, nsite[gene], om, oma, alpha, tota/grandtotoma, n/ngene, score[gene], posw[gene], posom[gene]))
+
+    return [score, posw, posom, minposom, maxposom, selectedsites, sitepp, score2, score3, meanom, meanoma]
 
 
 if __name__ == "__main__":
 
     import sys
-    chain_name = sys.argv[1]
-    burnin = int(sys.argv[2])
+    #chain_name = sys.argv[1]
+    #burnin = int(sys.argv[2])
+    #ret = parse(chain_name, burnin)
+    #print(ret)
 
-    ret = parse(chain_name, burnin)
-    print(ret)
+    basename = sys.argv[1]
+    genefile = sys.argv[2]
+    burnin = int(sys.argv[3])
+
+    # get gene list
+    with open(genefile, 'r') as listfile:
+        genelist = [gene.rstrip('\n').replace(".ali","") for gene in listfile]
+
+    parse_list(basename, genelist, burnin)
 

@@ -99,6 +99,7 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
     gene_postselprob = dict()
     gene_meanposw = dict()
     gene_meanposom = dict()
+    gene_meanoma = dict()
     gene_minposom = dict()
     gene_maxposom = dict()
     gene_posom_sample = dict()
@@ -107,6 +108,7 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
         gene_postselprob[gene] = mean([(float(sample[i]) > 0) for sample in posw_mcmc])
         gene_meanposw[gene] = mean([float(sample[i]) for sample in posw_mcmc])
         gene_meanposom[gene] = mean([float(sample[i]) for sample in posom_mcmc])
+        gene_meanoma[gene] = mean([float(posw[i]) * (float(posom_mcmc[j][i]) - 1) for j,posw in enumerate(posw_mcmc)])
 
         gene_posom_sample[gene] = [float(sample[i]) for sample in posom_mcmc]
         sorted_posom_sample = sorted(gene_posom_sample[gene])
@@ -203,10 +205,28 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
                         outfile.write("\t{0}".format(int(100 * gene_sitepp[gene][k])))
                 outfile.write("\n")
 
+
+        totnsite = sum([ns for (gene,ns) in gene_nsite.items()])
+        grandtotoma = sum([oma*gene_nsite[gene] for (gene,oma) in gene_meanoma.items()])
+        grandmeanoma = grandtotoma / totnsite
+
+        with open(chain_name + ".sortedoma", 'w') as outfile:
+
+            tota = 0
+            n = 0
+            outfile.write("{0:18s}  {1:5s}  {2:5s}  {3:5s}  {4:5s}  {5:5s}  {6:5s}  {7:5s}\n".format("gene", "nsite", "om_a", "%oma", "%genes", "pp", "p+", "om+"))
+
+            for (gene,oma) in sorted(gene_meanoma.items(), key=lambda kv: kv[1], reverse=True):
+                a = oma * gene_nsite[gene]
+                tota = tota + a
+                n = n + 1
+                outfile.write("{0:18s}  {1:5d}  {2:5.3f}  {3:5.2f}  {4:5.2f}  {5:5.3f}  {6:5.3f}  {7:5.3f}\n".format(
+                    gene, gene_nsite[gene], oma, tota/grandtotoma, n/ngene, gene_postselprob[gene], gene_meanposw[gene], gene_meanposom[gene]))
+
     if path != "":
         os.chdir(current_dir)
 
-    return [gene_postselprob, gene_meanposw, gene_meanposom, gene_minposom, gene_maxposom, gene_selectedsites, gene_sitepp, gene_postselprob2, gene_postselprob3, hyperparams]
+    return [gene_postselprob, gene_meanposw, gene_meanposom, gene_minposom, gene_maxposom, gene_selectedsites, gene_sitepp, gene_postselprob2, gene_postselprob3, hyperparams, gene_meanoma]
 
 if __name__ == "__main__":
 
@@ -222,25 +242,14 @@ if __name__ == "__main__":
         with_sites = False
 
     res = parse_list(chain_name, burnin, with_sites=with_sites, write_output = True)
-    [score, posw, posom, minposom, maxposom, selectedsites, sitepp, score2, score3, hyperparams] = res[0:10]
-    truepos = dict()
-    cutoff_list = [0.5, 0.7, 0.9]
-    [gene_ndisc, gene_fdr, gene_fp, gene_efdr, gene_etpr] = gene_bayes_fdr(cutoff_list, score, truepos, chain_name)
+    [score, posw, posom, minposom, maxposom, selectedsites, sitepp, score2, score3, hyperparams, meanoma] = res[0:11]
 
-    with open(chain_name + ".genefdr", 'w') as outfile:
-        outfile.write("{0:5s} {1:5s} {2:5s} {3:5s}\n".format("c", "ndisc", "efdr", "etpr"))
-        for cutoff in cutoff_list:
-            ndisc = gene_ndisc[cutoff]
-            if ndisc:
-                efdr = gene_efdr[cutoff]
-                etpr = gene_etpr[cutoff]
-                outfile.write("{0:5.1f} {1:5d} {2:5.2f} {3:5.2f}\n".format(cutoff, ndisc, efdr, etpr))
+    gene_bayes_fdr([0.05, 0.1, 0.3, 0.5], score, dict(), chain_name)
+    print("fdr series in " + chain_name + ".genefdr")
 
 
-    print("stats in " + chain_name + ".genefdr")
-
+    print("oma series in " + chain_name + ".geneoma")
     with open(chain_name+ ".posthyper", 'w') as outfile:
-
         hypernamelist = ['purom_mean', 'purom_invconc', 'dposom_mean', 'dposom_invshape', 'purw_mean', 'purw_invconc', 'posw_mean', 'posw_invconc', 'pi']
         for i,name in enumerate(hypernamelist):
             outfile.write("{0:20s}".format(name))
@@ -249,3 +258,7 @@ if __name__ == "__main__":
 
     print("estimated hyperparameters in " + chain_name + ".posthyper")
 
+    #gene_nsite = dict()
+    #for gene in sitepp:
+    #    gene_nsite[gene] = len(sitepp[gene])
+    #gene_bayes_oma([0.05, 0.1, 0.3, 0.5], gene_meanoma, gene_nsite, dict(), chain_name)
