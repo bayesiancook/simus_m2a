@@ -168,7 +168,9 @@ def gene_bayes_fdr(cutoff_list, score, truepos, outname):
     return [gene_ndisc, gene_fdr, gene_efnr, gene_fnr]
 
 
-# tabulate results across all methods for a given dataset
+# collect results across all methods for a given dataset
+# returns a tuple of dictionaries
+# [gene_ndisc, gene_fdr, gene_efnr, gene_fnr]
 
 def method_gene_fdr(cutoff_list, namelist, score, truepos, outname):
 
@@ -187,55 +189,10 @@ def method_gene_fdr(cutoff_list, namelist, score, truepos, outname):
         else:
             [gene_ndisc[name], gene_fdr[name], gene_efnr[name], gene_fnr[name]] = gene_bayes_fdr(cutoff_list, score[name], truepos, outname + "_" + name);
 
-    with open(outname + ".genefdr", 'w') as outfile:
 
-        outfile.write("{0:>18s}".format(""))
-        for cutoff in cutoff_list:
-            if fromsimu:
-                outfile.write("{0:^24.2f}".format(cutoff))
-            else:
-                outfile.write("{0:^14.2f}".format(cutoff))
-        outfile.write("\n")
+    return {"ndisc": gene_ndisc, 
+            "fdr" : gene_fdr, 
+            "e-fnr" : gene_efnr,
+            "fnr" : gene_fnr}
 
-        outfile.write("{0:>18s}".format(""))
-        for cutoff in cutoff_list:
-            if fromsimu:
-                outfile.write("  {0:>5s} {1:>5s} {2:>5s} {3:>5s}".format("disc", "fdr", "efnr", "fnr"))
-            else:
-                outfile.write("  {0:>5s} {1:>5s}".format("disc", "efnr"))
-        outfile.write("\n")
-
-        namelist2 = ["df1_codeml", "df2_codeml", "mixdf1_codeml"] + [name for name in namelist if name != "codeml"]
-        for name in namelist2:
-
-            outfile.write("{0:>18s}".format(name))
-
-            for cutoff in cutoff_list:
-                if fromsimu:
-                    if name[-6:] == "codeml":
-                        outfile.write("  {0:5d} {1:5.2f} {2:^5s} {3:5.2f}".format(
-                            gene_ndisc[name][cutoff], 
-                            gene_fdr[name][cutoff], 
-                            "-", 
-                            gene_fnr[name][cutoff]))
-                    else:
-                        outfile.write("  {0:5d} {1:5.2f} {2:5.2f} {3:5.2f}".format(
-                            gene_ndisc[name][cutoff], 
-                            gene_fdr[name][cutoff], 
-                            gene_efnr[name][cutoff],
-                            gene_fnr[name][cutoff]))
-
-                else:
-                    if name[-6:] == "codeml":
-                        outfile.write("  {0:5d} {1:^5s}".format(
-                            gene_ndisc[name][cutoff],
-                            "-"))
-                    else:
-                        outfile.write("  {0:5d} {1:5.2f}".format(
-                            gene_ndisc[name][cutoff],
-                            gene_efnr[name][cutoff]))
-
-            outfile.write("\n")
-
-    return [gene_ndisc, gene_fdr, gene_efnr, gene_fnr]
 

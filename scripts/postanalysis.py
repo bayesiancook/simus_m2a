@@ -376,3 +376,106 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
 
     return method_gene_fdr(cutoff_list, namelist, score, truepos, outname)
 
+
+def full_m2a_postanalysis(exp_folder, simu_list, single_basename, multi_basename, outname, single_burnin = 100, multi_burnin = 500, with_sites = False, fdr_cutoff_list = default_cutoff_list, with_tex = False, fields = ["ndisc", "fdr", "e-fnr", "fnr"]):
+
+    simu_ret = dict()
+
+    exp_dir = exp_folder + "/"
+    res_dir = exp_dir + "results/"
+
+    for simu in simu_list:
+        print(simu)
+        simu_ret[simu] = m2a_postanalysis(exp_dir + simu, single_basename, multi_basename, single_burnin = single_burnin, multi_burnin = multi_burnin, with_sites = with_sites, cutoff_list = fdr_cutoff_list, outname = res_dir + simu)
+
+    nf = len(fields)
+    namelist = ["df1_codeml", "df2_codeml", "mixdf1_codeml"] + single_basename + multi_basename
+
+    with open(res_dir + outname + ".summary", 'w') as outfile:
+
+        outfile.write("{0:>18s}".format(""))
+        for cutoff in fdr_cutoff_list:
+            outfile.write('{1:^{0}.2f}'.format(6*nf,cutoff))
+        outfile.write("\n")
+        outfile.write("\n")
+
+        for simu in simu_list:
+
+            outfile.write("{0:>18s}".format(simu))
+            for cutoff in fdr_cutoff_list:
+                for field in fields:
+                    outfile.write(" {0:>5s}".format(field))
+            outfile.write("\n")
+
+            for name in namelist:
+
+                outfile.write("{0:>18s}".format(name))
+
+                for cutoff in fdr_cutoff_list:
+                    for field in fields:
+                        if (field == "ndisc"):
+                            outfile.write(" {0:5d}".format(simu_ret[simu][field][name][cutoff]))
+                        else:
+                            if name in simu_ret[simu][field]:
+                                outfile.write(" {0:5.2f}".format(simu_ret[simu][field][name][cutoff]))
+                            else:
+                                outfile.write(" {0:^5s}".format("-"))
+                        
+                outfile.write("\n")
+
+            outfile.write("\n")
+
+    if with_tex:
+
+        with open(res_dir + outname + ".tex", 'w') as outfile:
+
+            tabul = 'rr' + 'c' * nf * len(fdr_cutoff_list)
+            outfile.write("\\begin{{tabular}}{{{0}}}\n".format(tabul))
+
+            outfile.write("& & \\multicolumn{{ {0} }}{{c}}{{target FDR}}".format(nf*len(fdr_cutoff_list)))
+            outfile.write(r'\\')
+            outfile.write("\n")
+
+            outfile.write(r'&')
+            for cutoff in fdr_cutoff_list:
+                outfile.write("& \\multicolumn{{0}}{{c}}{{${1:5.2f}$}}".format(nf,cutoff))
+            outfile.write(r'\\')
+            outfile.write("\n")
+
+            outfile.write(r'simulation & method ')
+            for cutoff in fdr_cutoff_list:
+                for field in fields:
+                    outfile.write("& {0}".format(field))
+            outfile.write(r'\\')
+            outfile.write("\n")
+
+            outfile.write("\\hline\n")
+
+            for simu in simu_list:
+
+                for i,name in enumerate(namelist):
+
+                    if not i:
+                        outfile.write("{0:>18s}".format(simu.replace("_", "\\_")))
+
+                    outfile.write("&{0:>18s}".format(name.replace("_", "\\_")))
+
+                    for cutoff in fdr_cutoff_list:
+                        for field in fields:
+                            if field == "ndisc":
+                                outfile.write("& ${0:5d}$".format(simu_ret[simu][field][name][cutoff]))
+                            else:
+                                if name in simu_ret[simu][field]:
+                                    outfile.write("& ${0:5.2f}$".format(simu_ret[simu][field][name][cutoff]))
+                                else:
+                                    outfile.write("& ${0:^5s}$".format("-"))
+
+                    outfile.write(r'\\')
+                    outfile.write("\n")
+
+                outfile.write("\\hline\n")
+
+            outfile.write(r'\end{tabular}{}')
+            outfile.write("\n")
+
+
