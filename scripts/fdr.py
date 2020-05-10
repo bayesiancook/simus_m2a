@@ -16,19 +16,27 @@ from scipy.stats import chi2
 # - chi_mode = df2    : chi2 with 2 df
 # - chi_mode = mixdf1 : mix of 0.5 point mass at 0 and 0.5 chi2 with 1df
 
-def gene_codeml_fdr(cutoff_list, score, truees, gene_nsite, outname, chi_mode = "df2"):
+def gene_codeml_fdr(cutoff_list, score, meanposw, trueposw, meanes, truees, gene_nsite, outname, chi_mode = "df2"):
 
     gene_ndisc = dict()
     gene_fdr = dict()
     gene_fnr = dict()
+    gene_cumules = dict()
     gene_truecumules = dict()
     gene_trueesfrac = dict()
+    gene_cumulpos = dict()
+    gene_truecumulpos = dict()
+    gene_trueposfrac = dict()
     for cutoff in cutoff_list:
         gene_ndisc[cutoff] = 0
         gene_fdr[cutoff] = 0
         gene_fnr[cutoff] = 0
+        gene_cumules[cutoff] = 0
         gene_truecumules[cutoff] = 0
         gene_trueesfrac[cutoff] = 0
+        gene_cumulpos[cutoff] = 0
+        gene_truecumulpos[cutoff] = 0
+        gene_trueposfrac[cutoff] = 0
 
     ngene = len(score)
     fromsimu = len(truees)
@@ -37,6 +45,7 @@ def gene_codeml_fdr(cutoff_list, score, truees, gene_nsite, outname, chi_mode = 
 
     totnsite = sum([nsite for (gene,nsite) in gene_nsite.items()])
     truetotes = sum([nsite*truees[gene] for (gene,nsite) in gene_nsite.items()])
+    truetotpos = sum([nsite*trueposw[gene] for (gene,nsite) in gene_nsite.items()])
 
     with open(outname + "_codeml.genefdr", 'w') as outfile:
 
@@ -51,6 +60,9 @@ def gene_codeml_fdr(cutoff_list, score, truees, gene_nsite, outname, chi_mode = 
         tp = 0
         fdr = 0
         truecumules = 0
+        cumules = 0
+        truecumulpos = 0
+        cumulpos = 0
         ns = 0
         
 
@@ -71,6 +83,9 @@ def gene_codeml_fdr(cutoff_list, score, truees, gene_nsite, outname, chi_mode = 
                 if efdr > 1:
                     efdr = 1
 
+                cumules = cumules + gene_nsite[gene]*meanes[gene]
+                cumulpos = cumulpos + gene_nsite[gene]*meanposw[gene]
+
                 if fromsimu:
                     if truees[gene] > 0:
                         tp = tp + 1
@@ -79,6 +94,8 @@ def gene_codeml_fdr(cutoff_list, score, truees, gene_nsite, outname, chi_mode = 
                     # truefrac
                     truecumules = truecumules + gene_nsite[gene]*truees[gene]
                     trueesfrac = truecumules / truetotes
+                    truecumulpos = truecumulpos + gene_nsite[gene]*trueposw[gene]
+                    trueposfrac = truecumulpos / truetotpos
 
                     # false discovery rate
                     fdr = fp / n
@@ -94,7 +111,10 @@ def gene_codeml_fdr(cutoff_list, score, truees, gene_nsite, outname, chi_mode = 
                             gene_ndisc[cutoff] = n
                             gene_fdr[cutoff] = fdr
                             gene_fnr[cutoff] = fnr
-                            # gene_esfrac[cutoff] = esfrac
+                            gene_cumulpos[cutoff] = cumulpos / 1000
+                            gene_truecumulpos[cutoff] = truecumulpos / 1000
+                            gene_trueposfrac[cutoff] = trueposfrac
+                            gene_cumules[cutoff] = cumules / ns * 100
                             gene_truecumules[cutoff] = truecumules / ns * 100
                             gene_trueesfrac[cutoff] = trueesfrac
 
@@ -104,8 +124,10 @@ def gene_codeml_fdr(cutoff_list, score, truees, gene_nsite, outname, chi_mode = 
                     for cutoff in cutoff_list:
                         if efdr < cutoff:
                             gene_ndisc[cutoff] = n
+                            gene_cumulpos[cutoff] = cumulpos / 1000
+                            gene_cumules[cutoff] = cumules / ns * 100
 
-    return [gene_ndisc, gene_fdr, gene_fnr, gene_truecumules, gene_trueesfrac]
+    return [gene_ndisc, gene_fdr, gene_fnr, gene_cumulpos, gene_truecumulpos, gene_trueposfrac, gene_cumules, gene_truecumules, gene_trueesfrac]
 
 # based on list of pp from a bayesian analysis,
 # compute bayes e-fdr (expected or advertised FDR)
@@ -115,7 +137,7 @@ def gene_codeml_fdr(cutoff_list, score, truees, gene_nsite, outname, chi_mode = 
 # - estimated fnr
 # - fnr
 
-def gene_bayes_fdr(cutoff_list, score, meanes, truees, gene_nsite, outname):
+def gene_bayes_fdr(cutoff_list, score, meanposw, trueposw, meanes, truees, gene_nsite, outname):
 
     ngene = len(score)
     fromsimu = len(truees)
@@ -125,6 +147,8 @@ def gene_bayes_fdr(cutoff_list, score, meanes, truees, gene_nsite, outname):
     totnsite = sum([nsite for (gene,nsite) in gene_nsite.items()])
     totes = sum([nsite*meanes[gene] for (gene,nsite) in gene_nsite.items()])
     truetotes = sum([nsite*truees[gene] for (gene,nsite) in gene_nsite.items()])
+    totpos = sum([nsite*meanposw[gene] for (gene,nsite) in gene_nsite.items()])
+    truetotpos = sum([nsite*trueposw[gene] for (gene,nsite) in gene_nsite.items()])
 
     gene_ndisc = dict()
     gene_fdr = dict()
@@ -134,6 +158,10 @@ def gene_bayes_fdr(cutoff_list, score, meanes, truees, gene_nsite, outname):
     gene_esfrac = dict()
     gene_truecumules = dict()
     gene_trueesfrac = dict()
+    gene_cumulpos = dict()
+    gene_posfrac = dict()
+    gene_truecumulpos = dict()
+    gene_trueposfrac = dict()
 
     for cutoff in cutoff_list:
         gene_ndisc[cutoff] = 0
@@ -144,6 +172,10 @@ def gene_bayes_fdr(cutoff_list, score, meanes, truees, gene_nsite, outname):
         gene_esfrac[cutoff] = 0
         gene_truecumules[cutoff] = 0
         gene_trueesfrac[cutoff] = 0
+        gene_cumulpos[cutoff] = 0
+        gene_posfrac[cutoff] = 0
+        gene_truecumulpos[cutoff] = 0
+        gene_trueposfrac[cutoff] = 0
 
     with open(outname + ".genefdr", 'w') as outfile:
 
@@ -160,11 +192,17 @@ def gene_bayes_fdr(cutoff_list, score, meanes, truees, gene_nsite, outname):
         tp = 0
         n = 0
         totpp = 0
+        ns = 0
+
         cumules = 0
         truecumules = 0
-        ns = 0
         esfrac = 0
         trueesfrac = 0
+
+        cumulpos = 0
+        truecumulpos = 0
+        posfrac = 0
+        trueposfrac = 0
 
         for (gene,pp) in sorted(score.items(), key=lambda kv: kv[1], reverse=True):
             n = n + 1
@@ -182,6 +220,9 @@ def gene_bayes_fdr(cutoff_list, score, meanes, truees, gene_nsite, outname):
             cumules = cumules + gene_nsite[gene]*meanes[gene]
             esfrac = cumules / totes
 
+            cumulpos = cumulpos + gene_nsite[gene]*meanposw[gene]
+            posfrac = cumulpos / totpos
+
             fdr = 0
             fnr = 0
 
@@ -194,6 +235,10 @@ def gene_bayes_fdr(cutoff_list, score, meanes, truees, gene_nsite, outname):
                 # dwestimated cumul and frac of proportion of total mass of effect size explained thus far
                 truecumules = truecumules + gene_nsite[gene]*truees[gene]
                 trueesfrac = truecumules / truetotes
+
+                truecumulpos = truecumulpos + gene_nsite[gene]*trueposw[gene]
+                trueposfrac = truecumulpos / truetotpos
+
                 # false discovery rate
                 fdr = fp / n
                 # sensitivity or recall
@@ -210,19 +255,25 @@ def gene_bayes_fdr(cutoff_list, score, meanes, truees, gene_nsite, outname):
                     gene_fdr[cutoff] = fdr
                     gene_efnr[cutoff] = efnr
                     gene_fnr[cutoff] = fnr
+
+                    gene_cumulpos[cutoff] = cumulpos / 1000
+                    gene_truecumulpos[cutoff] = truecumulpos / 1000
+                    gene_posfrac[cutoff] = posfrac
+                    gene_trueposfrac[cutoff] = trueposfrac
+
                     gene_cumules[cutoff] = cumules / ns * 100
                     gene_truecumules[cutoff] = truecumules / ns * 100
                     gene_esfrac[cutoff] = esfrac
                     gene_trueesfrac[cutoff] = trueesfrac
 
-    return [gene_ndisc, gene_fdr, gene_efnr, gene_fnr, gene_cumules, gene_truecumules, gene_esfrac, gene_trueesfrac]
+    return [gene_ndisc, gene_fdr, gene_efnr, gene_fnr, gene_cumulpos, gene_truecumulpos, gene_posfrac, gene_trueposfrac, gene_cumules, gene_truecumules, gene_esfrac, gene_trueesfrac]
 
 
 # collect results across all methods for a given dataset
 # returns a tuple of dictionaries
 # [gene_ndisc, gene_fdr, gene_efnr, gene_fnr]
 
-def method_gene_fdr(cutoff_list, namelist, score, meanes, truees, gene_nsite, outname):
+def method_gene_fdr(cutoff_list, namelist, score, meanposw, trueposw, meanes, truees, gene_nsite, outname):
 
     fromsimu = len(truees)
 
@@ -230,6 +281,10 @@ def method_gene_fdr(cutoff_list, namelist, score, meanes, truees, gene_nsite, ou
     gene_fdr = dict()
     gene_efnr = dict()
     gene_fnr = dict()
+    gene_cumulpos = dict()
+    gene_posfrac = dict()
+    gene_truecumulpos = dict()
+    gene_trueposfrac = dict()
     gene_cumules = dict()
     gene_esfrac = dict()
     gene_truecumules = dict()
@@ -238,16 +293,20 @@ def method_gene_fdr(cutoff_list, namelist, score, meanes, truees, gene_nsite, ou
     for name in namelist:
         if name == "codeml":
             for mode in ["df2", "df1", "mixdf1"]:
-                [gene_ndisc[mode + "_codeml"], gene_fdr[mode + "_codeml"], gene_fnr[mode + "_codeml"], gene_truecumules[mode + "_codeml"], gene_trueesfrac[mode + "_codeml"]] = gene_codeml_fdr(cutoff_list, score["codeml"], truees, gene_nsite, outname + "_" + mode, chi_mode = mode);
+                [gene_ndisc[mode + "_codeml"], gene_fdr[mode + "_codeml"], gene_fnr[mode + "_codeml"], gene_cumulpos[mode + "_codeml"], gene_truecumulpos[mode + "_codeml"], gene_trueposfrac[mode + "_codeml"], gene_cumules[mode + "_codeml"], gene_truecumules[mode + "_codeml"], gene_trueesfrac[mode + "_codeml"]] = gene_codeml_fdr(cutoff_list, score["codeml"], meanposw["codeml"], trueposw, meanes["codeml"], truees, gene_nsite, outname + "_" + mode, chi_mode = mode);
 
         else:
-            [gene_ndisc[name], gene_fdr[name], gene_efnr[name], gene_fnr[name], gene_cumules[name], gene_truecumules[name], gene_esfrac[name], gene_trueesfrac[name]] = gene_bayes_fdr(cutoff_list, score[name], meanes[name], truees, gene_nsite, outname + "_" + name);
+            [gene_ndisc[name], gene_fdr[name], gene_efnr[name], gene_fnr[name], gene_cumulpos[name], gene_truecumulpos[name], gene_posfrac[name], gene_trueposfrac[name], gene_cumules[name], gene_truecumules[name], gene_esfrac[name], gene_trueesfrac[name]] = gene_bayes_fdr(cutoff_list, score[name], meanposw[name], trueposw, meanes[name], truees, gene_nsite, outname + "_" + name);
 
 
     return {"n": gene_ndisc, 
             "fdr" : gene_fdr, 
             "efnr" : gene_efnr,
             "fnr" : gene_fnr,
+            "epos" : gene_cumulpos,
+            "pos" : gene_truecumulpos,
+            "e%pos" : gene_posfrac,
+            "%pos" : gene_trueposfrac,
             "ees" : gene_cumules,
             "es" : gene_truecumules,
             "e%es" : gene_esfrac,

@@ -19,7 +19,7 @@ import simuparams
 # <outname>.hyper         : median and 95CI for hyperparameters
 # <outname>.genefdr       : posterior estimate of FDR
 
-default_cutoff_list = [0.01, 0.05, 0.1]
+default_cutoff_list = [0.05, 0.1, 0.3]
 
 def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a_postanalysis", single_burnin = 100, multi_burnin = 500, dlnlmin = 0, dlnlmax = 0, min_omega = 1.0, with_sites = False, refname = "indmm2a", genepp_cutoff = 0.5, sitepp_cutoff = 0.90, cutoff_list = default_cutoff_list):
 
@@ -60,7 +60,8 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
         [truepurw, trueposw, truepurom, truedposom, truesiteom, truepos2] = simuparams.get_true_params(exp_folder)
         (pi, purw_mean, purw_var, purw_invconc, posw_mean, posw_var, posw_invconc, purom_mean, purom_var, purom_invconc, dposom_mean, dposom_var, dposom_invshape) = simuparams.get_empirical_hyperparams(truepurw, trueposw, truepurom, truedposom)
 
-    truees = {gene : trueposw[gene]*dposom for (gene,dposom) in truedposom.items()}
+    truees = trueposw
+    # truees = {gene : trueposw[gene]*dposom for (gene,dposom) in truedposom.items()}
 
     # for each method (codeml, m2a, mm2a, under any prior or settings)
     # and for all genes
@@ -87,6 +88,7 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
     name = "codeml"
     codeml_res = parsecodeml.parse_list(codeml_dir, genelist)
     [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name]] = codeml_res[0:7]
+    meanes[name] = {gene : posw*posom[name][gene] for (gene,posw) in posw[name].items()}
 
     print("parsing single gene analyses")
     # parsing m2a results
@@ -378,7 +380,7 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
     if fromsimu:
         truepos = trueposw
 
-    return method_gene_fdr(cutoff_list, namelist, score, meanes, truees, gene_nsite, outname)
+    return method_gene_fdr(cutoff_list, namelist, score, posw, trueposw, meanes, truees, gene_nsite, outname)
 
 
 def full_m2a_postanalysis(exp_folder, simu_list, single_basename, multi_basename, outname, single_burnin = 100, multi_burnin = 500, with_sites = False, fdr_cutoff_list = default_cutoff_list, with_tex = False, fields = ["ndisc", "fdr", "e-fnr", "fnr"]):
@@ -393,7 +395,8 @@ def full_m2a_postanalysis(exp_folder, simu_list, single_basename, multi_basename
         simu_ret[simu] = m2a_postanalysis(exp_dir + simu, single_basename, multi_basename, single_burnin = single_burnin, multi_burnin = multi_burnin, with_sites = with_sites, cutoff_list = fdr_cutoff_list, outname = res_dir + simu)
 
     nf = len(fields)
-    namelist = ["df1_codeml", "df2_codeml", "mixdf1_codeml"] + single_basename + multi_basename
+    namelist = ["df2_codeml"] + single_basename + multi_basename
+    # namelist = ["df1_codeml", "df2_codeml", "mixdf1_codeml"] + single_basename + multi_basename
 
     with open(res_dir + outname + ".summary", 'w') as outfile:
 
