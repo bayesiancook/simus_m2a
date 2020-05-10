@@ -19,7 +19,7 @@ import simuparams
 # <outname>.hyper         : median and 95CI for hyperparameters
 # <outname>.genefdr       : posterior estimate of FDR
 
-default_cutoff_list = [0.05, 0.1, 0.3, 0.5]
+default_cutoff_list = [0.01, 0.05, 0.1]
 
 def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a_postanalysis", single_burnin = 100, multi_burnin = 500, dlnlmin = 0, dlnlmax = 0, min_omega = 1.0, with_sites = False, refname = "indmm2a", genepp_cutoff = 0.5, sitepp_cutoff = 0.90, cutoff_list = default_cutoff_list):
 
@@ -60,6 +60,8 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
         [truepurw, trueposw, truepurom, truedposom, truesiteom, truepos2] = simuparams.get_true_params(exp_folder)
         (pi, purw_mean, purw_var, purw_invconc, posw_mean, posw_var, posw_invconc, purom_mean, purom_var, purom_invconc, dposom_mean, dposom_var, dposom_invshape) = simuparams.get_empirical_hyperparams(truepurw, trueposw, truepurom, truedposom)
 
+    truees = {gene : trueposw[gene]*dposom for (gene,dposom) in truedposom.items()}
+
     # for each method (codeml, m2a, mm2a, under any prior or settings)
     # and for all genes
     # we want posw and pp, posom and min max, and selected sites
@@ -72,6 +74,8 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
     posom = dict()
     minposom = dict()
     maxposom = dict()
+    meanom = dict()
+    meanes = dict()
     selectedsites = dict()
     sitepp = dict()
     hyperparams = dict()
@@ -89,14 +93,14 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
     for name in single_basename:
         print(name)
         single_res = parsem2a.parse_list(name, genelist, single_burnin, path=single_dir, min_omega = min_omega)
-        [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name], score2[name], score3[name]] = single_res[0:9]
+        [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name], score2[name], score3[name], meanom[name], meanes[name]] = single_res[0:11]
 
     print("parsing multi gene analyses")
     # parsing mm2a results
     for name in multi_basename:
         print(name)
         multi_res = parsemm2a.parse_list(name, multi_burnin, path=multi_dir, with_sites = with_sites)
-        [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name], score2[name], score3[name], hyperparams[name]] = multi_res[0:10]
+        [score[name], posw[name], posom[name], minposom[name], maxposom[name], selectedsites[name], sitepp[name], score2[name], score3[name], hyperparams[name], meanes[name]] = multi_res[0:11]
 
     print("printing out sorted list in .sortedparams")
 
@@ -374,7 +378,7 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
     if fromsimu:
         truepos = trueposw
 
-    return method_gene_fdr(cutoff_list, namelist, score, truepos, outname)
+    return method_gene_fdr(cutoff_list, namelist, score, meanes, truees, gene_nsite, outname)
 
 
 def full_m2a_postanalysis(exp_folder, simu_list, single_basename, multi_basename, outname, single_burnin = 100, multi_burnin = 500, with_sites = False, fdr_cutoff_list = default_cutoff_list, with_tex = False, fields = ["ndisc", "fdr", "e-fnr", "fnr"]):
@@ -413,10 +417,14 @@ def full_m2a_postanalysis(exp_folder, simu_list, single_basename, multi_basename
 
                 for cutoff in fdr_cutoff_list:
                     for field in fields:
-                        if (field == "ndisc"):
+                        if (field == "n"):
                             outfile.write(" {0:5d}".format(simu_ret[simu][field][name][cutoff]))
                         else:
                             if name in simu_ret[simu][field]:
+                                #if field in ["es", "ees"]:
+                                #    outfile.write(" {0:5.0f}".format(simu_ret[simu][field][name][cutoff]))
+                                #else:
+                                #    outfile.write(" {0:5.2f}".format(simu_ret[simu][field][name][cutoff]))
                                 outfile.write(" {0:5.2f}".format(simu_ret[simu][field][name][cutoff]))
                             else:
                                 outfile.write(" {0:^5s}".format("-"))
