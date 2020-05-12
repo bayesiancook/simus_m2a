@@ -9,9 +9,9 @@ import parsem2a
 import parsemm2a
 import simuparams
 
-cutoff_list = [0.05, 0.1, 0.3]
+default_cutoff_list = [0.05, 0.1, 0.3]
 
-def gene_es(score, meanes, truees, nsite, outname):
+def gene_es(score, meanes, truees, nsite, outname, cutoff_list = default_cutoff_list):
 
     gene_ndisc = dict()
     gene_cumules = dict()
@@ -73,7 +73,6 @@ def gene_es(score, meanes, truees, nsite, outname):
                 for cutoff in cutoff_list:
                     if esfrac < 1-cutoff:
                         gene_ndisc[cutoff] = n
-                        # gene_ndisc[cutoff] = n / ngene
                         gene_cumules[cutoff] = cumules / ns * 100
                         gene_truecumules[cutoff] = truecumules / ns * 100
                         gene_trueesfrac[cutoff] = trueesfrac
@@ -84,7 +83,7 @@ def gene_es(score, meanes, truees, nsite, outname):
 
 
 
-def m2a_postes(exp_folder, single_basename, multi_basename, outname = "m2a_postanalysis", single_burnin = 100, multi_burnin = 500):
+def m2a_postes(exp_folder, single_basename, multi_basename, outname = "m2a_postanalysis", single_burnin = 100, multi_burnin = 500, esmode = "excess", cutoff_list = default_cutoff_list):
 
     exp_dir = exp_folder + "/"
     codeml_dir = exp_dir + "codeml/"
@@ -167,13 +166,15 @@ def m2a_postes(exp_folder, single_basename, multi_basename, outname = "m2a_posta
     gene_fdr = dict()
 
     for name in namelist:
-        [gene_ndisc[name], gene_cumules[name], gene_truecumules[name], gene_trueesfrac[name], gene_efdr[name], gene_fdr[name]] = gene_es(score[name], posw[name], trueposw, gene_nsite, outname + "_" + name)
-        # [gene_ndisc[name], gene_cumules[name], gene_truecumules[name], gene_trueesfrac[name], gene_efdr[name], gene_fdr[name]] = gene_es(score[name], excess[name], trueexcess, gene_nsite, outname + "_" + name)
+        if esmode == "pos":
+            [gene_ndisc[name], gene_cumules[name], gene_truecumules[name], gene_trueesfrac[name], gene_efdr[name], gene_fdr[name]] = gene_es(score[name], posw[name], trueposw, gene_nsite, outname + "_" + name, cutoff_list = cutoff_list)
+        else:
+            [gene_ndisc[name], gene_cumules[name], gene_truecumules[name], gene_trueesfrac[name], gene_efdr[name], gene_fdr[name]] = gene_es(score[name], excess[name], trueexcess, gene_nsite, outname + "_" + name, cutoff_list = cutoff_list)
 
     return [gene_ndisc, gene_cumules, gene_truecumules, gene_trueesfrac, gene_efdr, gene_fdr]
 
 
-def full_m2a_postes(exp_folder, simu_list, single_basename, multi_basename, outname, single_burnin = 100, multi_burnin = 500, with_tex = False):
+def full_m2a_postes(exp_folder, simu_list, single_basename, multi_basename, outname, single_burnin = 100, multi_burnin = 500, with_tex = False, esmode = "excess", cutoff_list = default_cutoff_list):
 
     exp_dir = exp_folder + "/"
     res_dir = exp_dir + "results/"
@@ -187,7 +188,7 @@ def full_m2a_postes(exp_folder, simu_list, single_basename, multi_basename, outn
 
     for simu in simu_list:
         print(simu)
-        [simu_ndisc[simu], simu_cumules[simu], simu_truecumules[simu], simu_trueesfrac[simu], simu_efdr[simu], simu_fdr[simu]] = m2a_postes(exp_dir + simu, single_basename, multi_basename, single_burnin = single_burnin, multi_burnin = multi_burnin, outname = res_dir + simu)
+        [simu_ndisc[simu], simu_cumules[simu], simu_truecumules[simu], simu_trueesfrac[simu], simu_efdr[simu], simu_fdr[simu]] = m2a_postes(exp_dir + simu, single_basename, multi_basename, single_burnin = single_burnin, multi_burnin = multi_burnin, outname = res_dir + simu, esmode = esmode, cutoff_list = cutoff_list)
 
     namelist = single_basename + multi_basename
     # namelist = ["codeml"] + single_basename + multi_basename
@@ -204,7 +205,7 @@ def full_m2a_postes(exp_folder, simu_list, single_basename, multi_basename, outn
 
             outfile.write("{0:>18s}".format(simu))
             for cutoff in cutoff_list:
-                outfile.write(" {0:>5s}".format("%gene"))
+                outfile.write(" {0:>5s}".format("n"))
                 outfile.write(" {0:>5s}".format("%es"))
                 outfile.write(" {0:>5s}".format("efdr"))
                 outfile.write(" {0:>5s}".format("fdr"))

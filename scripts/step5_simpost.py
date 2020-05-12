@@ -9,13 +9,13 @@ from postanalysis import *
 
 exp_folder = sys.argv[1]
 
-fields = ["ndisc", "fdr"]
-# fields = ["ndisc", "fdr", "e-fnr", "fnr"]
+# fields = ["n", "fdr"]
+fields = ["n", "fdr", "efnr", "fnr"]
 
 simu_list = ["simu10"]
 # simu_list = ["simu30", "simu10", "simu03"]
 
-single_basename = ["infm2a", "uninfpi50m2a", "uninfpi10m2a", "uninfpi02m2a", "subjpi50m2a", "subjpi10m2a", "subjpi02m2a"]
+single_basename = ["infm2a", "uninfpi50m2a", "uninfpi10m2a", "uninfpi02m2a", "subjpi50m2a", "subjpi10m2a", "subjpi02m2a", "multiinf0"]
 
 multi_basename = ["unconsindmm2a", "unconsshrunkenmm2a", "indmm2a", "shrunkenmm2a", "sharedmm2a"]
 

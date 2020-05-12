@@ -25,7 +25,7 @@ def parse(chain_name, burnin, path = "", min_omega = 1.0) :
         posw_sample = [float(sample[3]) for sample in mcmc]
         sorted_dposom_sample = sorted(dposom_sample)
 
-        # meanom = mean([ (1-pos)*(purw_sample[i]*purom_sample[i] + (1-purw_sample[i])) + pos*(1 + dposom_sample[i]) for i,pos in enumerate(posw_sample)])
+        meanom = mean([ (1-pos)*(purw_sample[i]*purom_sample[i] + (1-purw_sample[i])) + pos*(1 + dposom_sample[i]) for i,pos in enumerate(posw_sample)])
         meanoma = mean([pos*dposom_sample[i] for i,pos in enumerate(posw_sample)])
 
         meanposw = mean(posw_sample)
@@ -110,12 +110,12 @@ def parse_list(basename, gene_list, burnin, path = "", min_omega = 1):
     grandmeanoma = grandtotoma / totnsite
     grandmeanalpha = grandmeanoma / grandmeanom
 
-    with open(basename + ".meanoma", 'w') as os:
+    with open(path + basename + ".meanoma", 'w') as os:
         os.write("omega_tot : {0}\n".format(grandmeanom))
         os.write("omega_a   : {0}\n".format(grandmeanoma))
         os.write("alpha     : {0}\n".format(grandmeanalpha))
 
-    with open(basename + ".sorted_oma", 'w') as outfile:
+    with open(path + basename + ".sorted_oma", 'w') as outfile:
 
         tota = 0
         n = 0

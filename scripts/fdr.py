@@ -51,7 +51,7 @@ def gene_codeml_fdr(cutoff_list, score, meanposw, trueposw, meanes, truees, gene
 
         # header 
         if fromsimu:
-            outfile.write("{0:15s}\t{1:5s}\t{2:7s}\t{3:7s}\t{4:7s}\t{5:7s}\n".format("#gene", "dlnL", "pval", "e-fdr", "fdr", "fnr","%es"))
+            outfile.write("{0:15s}\t{1:5s}\t{2:7s}\t{3:7s}\t{4:7s}\t{5:7s}\t{6:7s}\n".format("#gene", "dlnL", "pval", "e-fdr", "fdr", "fnr","%es"))
         else:
             outfile.write("{0:15s}\t{1:5s}\t{2:7s}\t{3:7s}\n".format("gene", "dlnL", "pval", "e-fdr"))
 
@@ -64,7 +64,6 @@ def gene_codeml_fdr(cutoff_list, score, meanposw, trueposw, meanes, truees, gene
         truecumulpos = 0
         cumulpos = 0
         ns = 0
-        
 
         for (gene,dlnl) in sorted(score.items(), key=lambda kv: kv[1], reverse=True):
 
@@ -181,9 +180,9 @@ def gene_bayes_fdr(cutoff_list, score, meanposw, trueposw, meanes, truees, gene_
 
         # header
         if fromsimu:
-            outfile.write("{0:15s}\t{1:7s}\t{2:7s}\t{3:7s}\t{4:7s}\t{5:7s}\n".format("#gene", "pp", "e-fdr", "fdr", "e-fnr", "fnr"))
+            outfile.write("{0:15s}\t{1:7s}\t{2:7s}\t{3:7s}\t{4:7s}\t{5:7s}\t{6:7s}\t{7:7s}\n".format("#gene", "pp", "e-fdr", "fdr", "e-fnr", "fnr", "e-%es", "%es"))
         else:
-            outfile.write("{0:15s}\t{1:7s}\t{2:7s}\t{3:7s}\n".format("gene", "pp", "e-fdr", "e-fnr"))
+            outfile.write("{0:15s}\t{1:7s}\t{2:7s}\t{3:7s}\t{4:7s}\n".format("gene", "pp", "e-fdr", "e-fnr", "e-%es"))
 
         # estimated total number of positively selected genes
         etotp = sum([pp for (gene,pp) in score.items()])

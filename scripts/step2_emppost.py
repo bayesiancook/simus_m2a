@@ -11,8 +11,7 @@ from postanalysis import *
 
 exp_folder = sys.argv[1]
 
-# fields = ["ndisc"]
-fields = ["ndisc", "e-fnr"]
+fields = ["n", "efnr"]
 
 if not os.path.exists(exp_folder + "/results/"):
     print("creating results folder")

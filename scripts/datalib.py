@@ -32,7 +32,7 @@ def read_phylip(infile_name):
 # output: codeml-compatible alignment (pruned from taxa not in taxon list if this list is provided)
 # if all_taxa == True: add taxa (with all missing sequences) if not in original alignment
 
-def phy2codeml(infile_name, outfile_name, taxon_list = [], all_taxa = False, force = False):
+def phy2codeml(infile_name, outfile_name, taxon_list = [], all_taxa = False, force = False, prune_missing = False):
 
     if not force and os.path.exists(outfile_name):
         print("in phy2codeml: destination file already exists: ", outfile_name)
@@ -65,20 +65,21 @@ def phy2codeml(infile_name, outfile_name, taxon_list = [], all_taxa = False, for
             outfile.write("{0} {1}\n".format(ntaxa2,nsite))
             for (tax,seq) in ali.items():
                 if taxon_list == [] or tax in taxon_list:
-                    outfile.write("{0}  {1}\n".format(tax,seq))
+                    if not prune_missing or seq != all_missing:
+                        outfile.write("{0}  {1}\n".format(tax,seq))
 
 ########
 
 # input : list of single gene alignments and taxon list
 # output: list of single gene alignments compatible with codeml
 
-def make_single_gene_alignments(gene_list, taxon_list = [], from_dir = "", to_dir = "", from_prefix = "", to_prefix = "", from_ext = ".ali", to_ext = ".ali", all_taxa = False, force = False):
+def make_single_gene_alignments(gene_list, taxon_list = [], from_dir = "", to_dir = "", from_prefix = "", to_prefix = "", from_ext = ".ali", to_ext = ".ali", all_taxa = False, force = False, prune_missing  = False):
 
     if not os.path.exists(to_dir):
         os.system("mkdir " + to_dir)
 
     for gene in gene_list:
-        phy2codeml(from_dir + from_prefix + gene + from_ext, to_dir + to_prefix + gene + to_ext, taxon_list = taxon_list, all_taxa = all_taxa, force = force)
+        phy2codeml(from_dir + from_prefix + gene + from_ext, to_dir + to_prefix + gene + to_ext, taxon_list = taxon_list, all_taxa = all_taxa, force = force, prune_missing  = prune_missing)
 
 
 ########

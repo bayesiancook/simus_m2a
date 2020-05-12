@@ -383,7 +383,7 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
     return method_gene_fdr(cutoff_list, namelist, score, posw, trueposw, meanes, truees, gene_nsite, outname)
 
 
-def full_m2a_postanalysis(exp_folder, simu_list, single_basename, multi_basename, outname, single_burnin = 100, multi_burnin = 500, with_sites = False, fdr_cutoff_list = default_cutoff_list, with_tex = False, fields = ["ndisc", "fdr", "e-fnr", "fnr"]):
+def full_m2a_postanalysis(exp_folder, simu_list, single_basename, multi_basename, outname, single_burnin = 100, multi_burnin = 500, with_sites = False, fdr_cutoff_list = default_cutoff_list, fields = ["ndisc", "fdr", "e-fnr", "fnr"]):
 
     simu_ret = dict()
 
@@ -435,58 +435,4 @@ def full_m2a_postanalysis(exp_folder, simu_list, single_basename, multi_basename
                 outfile.write("\n")
 
             outfile.write("\n")
-
-    if with_tex:
-
-        with open(res_dir + outname + ".tex", 'w') as outfile:
-
-            tabul = 'rr' + 'c' * nf * len(fdr_cutoff_list)
-            outfile.write("\\begin{{tabular}}{{{0}}}\n".format(tabul))
-
-            outfile.write("& & \\multicolumn{{ {0} }}{{c}}{{target FDR}}".format(nf*len(fdr_cutoff_list)))
-            outfile.write(r'\\')
-            outfile.write("\n")
-
-            outfile.write(r'&')
-            for cutoff in fdr_cutoff_list:
-                outfile.write("& \\multicolumn{{0}}{{c}}{{${1:5.2f}$}}".format(nf,cutoff))
-            outfile.write(r'\\')
-            outfile.write("\n")
-
-            outfile.write(r'simulation & method ')
-            for cutoff in fdr_cutoff_list:
-                for field in fields:
-                    outfile.write("& {0}".format(field))
-            outfile.write(r'\\')
-            outfile.write("\n")
-
-            outfile.write("\\hline\n")
-
-            for simu in simu_list:
-
-                for i,name in enumerate(namelist):
-
-                    if not i:
-                        outfile.write("{0:>18s}".format(simu.replace("_", "\\_")))
-
-                    outfile.write("&{0:>18s}".format(name.replace("_", "\\_")))
-
-                    for cutoff in fdr_cutoff_list:
-                        for field in fields:
-                            if field == "ndisc":
-                                outfile.write("& ${0:5d}$".format(simu_ret[simu][field][name][cutoff]))
-                            else:
-                                if name in simu_ret[simu][field]:
-                                    outfile.write("& ${0:5.2f}$".format(simu_ret[simu][field][name][cutoff]))
-                                else:
-                                    outfile.write("& ${0:^5s}$".format("-"))
-
-                    outfile.write(r'\\')
-                    outfile.write("\n")
-
-                outfile.write("\\hline\n")
-
-            outfile.write(r'\end{tabular}{}')
-            outfile.write("\n")
-
 

@@ -6,6 +6,8 @@ from numpy import mean
 from numpy import product
 from fdr import gene_bayes_fdr
 
+hypernamelist = ['purom_mean', 'purom_invconc', 'dposom_mean', 'dposom_invshape', 'purw_mean', 'purw_invconc', 'posw_mean', 'posw_invconc', 'pi']
+
 def parse_list(chain_name, burnin, with_sites = True, write_output = False, path = "", min_omega = 1.0) :
 
     current_dir = os.getcwd() + "/"
@@ -250,7 +252,6 @@ if __name__ == "__main__":
 
     print("oma series in " + chain_name + ".geneoma")
     with open(chain_name+ ".posthyper", 'w') as outfile:
-        hypernamelist = ['purom_mean', 'purom_invconc', 'dposom_mean', 'dposom_invshape', 'purw_mean', 'purw_invconc', 'posw_mean', 'posw_invconc', 'pi']
         for i,name in enumerate(hypernamelist):
             outfile.write("{0:20s}".format(name))
             (mean,min,max) = hyperparams[i]
