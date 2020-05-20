@@ -5,6 +5,7 @@ import os
 from numpy import mean
 from numpy import product
 from fdr import gene_bayes_fdr
+from gene_es import gene_es
 
 hypernamelist = ['purom_mean', 'purom_invconc', 'dposom_mean', 'dposom_invshape', 'purw_mean', 'purw_invconc', 'posw_mean', 'posw_invconc', 'pi']
 
@@ -26,6 +27,8 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
         ngene = int(header.rstrip('\n').split()[0])
         gene_list = [gene.rstrip('\n').split()[0].replace(".ali","") for i,gene in enumerate(listfile) if i < ngene]
 
+    gene_nsite = dict()
+
     # get original gene list
     with open(listname, 'r') as listfile:
         header = listfile.readline().rstrip('\n')
@@ -33,7 +36,6 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
             header = listfile.readline().rstrip('\n')
             ngene = int(header.split()[0])
             original_gene_list = []
-            gene_nsite = dict()
             for i in range(ngene):
                 gene = listfile.readline().rstrip('\n').replace(".ali","")
                 original_gene_list.append(gene)
@@ -50,7 +52,6 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
             # original_gene_list = [gene.rstrip('\n').split()[0].replace(".ali","") for gene in listfile]
 
             # check for ali file and correct number of sites
-            gene_nsite = dict()
             for gene in gene_list:
                 with open(data_path + gene + ".ali", 'r') as ali_file:
                     nsite = int(ali_file.readline().rstrip('\n').split()[1]) // 3
@@ -228,7 +229,7 @@ def parse_list(chain_name, burnin, with_sites = True, write_output = False, path
     if path != "":
         os.chdir(current_dir)
 
-    return [gene_postselprob, gene_meanposw, gene_meanposom, gene_minposom, gene_maxposom, gene_selectedsites, gene_sitepp, gene_postselprob2, gene_postselprob3, hyperparams, gene_meanoma]
+    return [gene_postselprob, gene_meanposw, gene_meanposom, gene_minposom, gene_maxposom, gene_selectedsites, gene_sitepp, gene_postselprob2, gene_postselprob3, hyperparams, gene_meanoma, gene_nsite]
 
 if __name__ == "__main__":
 
@@ -244,9 +245,9 @@ if __name__ == "__main__":
         with_sites = False
 
     res = parse_list(chain_name, burnin, with_sites=with_sites, write_output = True)
-    [score, posw, posom, minposom, maxposom, selectedsites, sitepp, score2, score3, hyperparams, meanoma] = res[0:11]
+    [score, posw, posom, minposom, maxposom, selectedsites, sitepp, score2, score3, hyperparams, meanoma, gene_nsite] = res[0:12]
 
-    gene_bayes_fdr([0.05, 0.1, 0.3, 0.5], score, dict(), chain_name)
+    gene_bayes_fdr([0.05, 0.1, 0.3], score, posw, dict(), posw, dict(), gene_nsite, chain_name)
     print("fdr series in " + chain_name + ".genefdr")
 
 
@@ -259,7 +260,5 @@ if __name__ == "__main__":
 
     print("estimated hyperparameters in " + chain_name + ".posthyper")
 
-    #gene_nsite = dict()
-    #for gene in sitepp:
-    #    gene_nsite[gene] = len(sitepp[gene])
-    #gene_bayes_oma([0.05, 0.1, 0.3, 0.5], gene_meanoma, gene_nsite, dict(), chain_name)
+    gene_es(score, posw, dict(), gene_nsite, chain_name, cutoff_list = [0.1, 0.2, 0.3])
+
