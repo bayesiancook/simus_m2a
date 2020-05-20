@@ -26,12 +26,13 @@ def prepare_subexperiment(exp_folder, prep_codeml = True, prep_single = True, pr
         codeml_dir = exp_dir + "codeml/"
         if os.path.exists(codeml_dir):
             print("directory " + codeml_dir + " already exists")
-            sys.exit()
-        os.system("mkdir " + codeml_dir)
+        else:
+            print("making codeml directory")
+            os.system("mkdir " + codeml_dir)
 
-        # make single-gene alignments and trees, copy them into target folder
-        make_single_gene_alignments(gene_list, from_dir = data_dir, to_dir = codeml_dir)
-        make_single_gene_trees(gene_list, tree, from_dir = data_dir, to_dir = codeml_dir)
+            # make single-gene alignments and trees, copy them into target folder
+            make_single_gene_alignments(gene_list, from_dir = data_dir, to_dir = codeml_dir)
+            make_single_gene_trees(gene_list, tree, from_dir = data_dir, to_dir = codeml_dir)
 
     # bayescode single-gene 
 
@@ -41,12 +42,13 @@ def prepare_subexperiment(exp_folder, prep_codeml = True, prep_single = True, pr
         single_dir = exp_dir + "singlegene/"
         if os.path.exists(single_dir):
             print("directory " + single_dir + " already exists")
-            sys.exit()
-        os.system("mkdir " + single_dir)
+        else:
+            print("making singlegene directory")
+            os.system("mkdir " + single_dir)
 
-        # make single-gene alignments and trees, copy them into target folder
-        make_single_gene_alignments(gene_list, from_dir = data_dir, to_dir = single_dir)
-        make_single_gene_trees(gene_list, tree, from_dir = data_dir, to_dir = single_dir)
+            # make single-gene alignments and trees, copy them into target folder
+            make_single_gene_alignments(gene_list, from_dir = data_dir, to_dir = single_dir)
+            make_single_gene_trees(gene_list, tree, from_dir = data_dir, to_dir = single_dir)
 
     # bayescode multi-gene 
 
@@ -55,21 +57,22 @@ def prepare_subexperiment(exp_folder, prep_codeml = True, prep_single = True, pr
         multi_dir = exp_dir + "multigene/"
         if os.path.exists(multi_dir):
             print("directory " + multi_dir + " already exists")
-            sys.exit()
-        os.system("mkdir " + multi_dir)
+        else:
+            print("making multigene directory")
+            os.system("mkdir " + multi_dir)
 
-        taxlist = [leaf.name for leaf in tree]
-        # make single-gene alignments with all taxa, copy them into target folder
-        make_single_gene_alignments(gene_list, taxon_list = taxlist, all_taxa = True, from_dir = data_dir, to_dir = multi_dir)
+            taxlist = [leaf.name for leaf in tree]
+            # make single-gene alignments with all taxa, copy them into target folder
+            make_single_gene_alignments(gene_list, taxon_list = taxlist, all_taxa = True, from_dir = data_dir, to_dir = multi_dir)
 
-        # make list of genes + header in multigene folder
-        with open(multi_dir + "all.list", 'w') as outlistfile:
-            outlistfile.write("{0}\n".format(len(gene_list)))
-            for gene in gene_list:
-                outlistfile.write(gene + ".ali\n")
+            # make list of genes + header in multigene folder
+            with open(multi_dir + "all.list", 'w') as outlistfile:
+                outlistfile.write("{0}\n".format(len(gene_list)))
+                for gene in gene_list:
+                    outlistfile.write(gene + ".ali\n")
 
-        # copy tree in multigene folder
-        os.system("cp " + exp_dir + "all.tree " + multi_dir)
+            # copy tree in multigene folder
+            os.system("cp " + exp_dir + "all.tree " + multi_dir)
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
