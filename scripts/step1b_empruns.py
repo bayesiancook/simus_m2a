@@ -1,5 +1,6 @@
 #! /usr/bin/python3.5
 
+# 1b series: only independent / shrunken / shared mm2a
 #
 # experiments on original empirical data
 # also: prepare ppred scripts for multigene data

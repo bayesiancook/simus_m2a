@@ -17,6 +17,8 @@ exp_folder = sys.argv[1]
 
 exp_dir = exp_folder + "/"
 
+emp_folder = exp_dir + "empirical"
+
 # multi gene post pred: post pred itself already done (scripts written at step 1, should be launched after multigene runs are complete)
 # this only formats the output
 # simulating under hard or soft shrinkage

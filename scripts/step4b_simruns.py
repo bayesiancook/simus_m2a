@@ -48,7 +48,10 @@ name2command = {"sharedmm2a" : "-x 1 1100 -nucrates shared -bl shared +G",
         "indmm2a" : "-x 1 1100 -nucrates ind -bl ind +G"}
 
 for simu in simu_list:
+
+    simu_folder = exp_dir + simu 
+
     for name in name2command:
-        runmm2a(exp_dir + simu, name2command[name], name, machine=multi_machine, queue=multi_queue, nodes=nodes, core=core, time=24, mem=16, path2batch=emp_folder + "/multigene/", path2run=multi_path2bayescode)
+        runmm2a(simu_folder, name2command[name], name, machine=multi_machine, queue=multi_queue, nodes=nodes, core=core, time=24, mem=16, path2batch=simu_folder + "/multigene/", path2run=multi_path2bayescode)
 
 
