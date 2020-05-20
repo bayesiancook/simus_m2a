@@ -64,7 +64,7 @@ for simu in single_simu_list:
     simu_folder = exp_dir + simu 
 
     for name in name2command:
-        runm2a(simu_folder, name2command[name], name, machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
+        runm2a(simu_folder, name2command[name], name, machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = simu_folder + "/singlegene/", path2run=path2bayescode)
 
     # informative run: get empirical freqs and moments of true effect sizes
     (pi, purw_mean, purw_var, purw_invconc, posw_mean, posw_var, posw_invconc, purom_mean, purom_var, purom_invconc, dposom_mean, dposom_var, dposom_invshape) = get_empirical_moments(simu_folder)
@@ -73,7 +73,7 @@ for simu in single_simu_list:
     infm2a_options= "-x 1 600 -pi {0} -purom {1} {2} -dposom {3} {4} -purw {5} {6} -posw {7} {8}".format(pi, purom_mean, purom_invconc, dposom_mean, dposom_invshape, purw_mean, purw_invconc, posw_mean, posw_invconc)
 
     # bash script for informative (oracle) prior
-    runm2a(simu_folder, infm2a_options, "infm2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = emp_folder + "/singlegene/", path2run=path2bayescode)
+    runm2a(simu_folder, infm2a_options, "infm2a", machine=machine, queue=queue, core=1, njobs_per_batch=1, time = 6, mem=1, path2batch = simu_folder + "/singlegene/", path2run=path2bayescode)
 
 
 # codeml and multi-gene runs
@@ -93,6 +93,6 @@ for simu in simu_list:
 
     # bayes multi-gene
     for name in name2command:
-        runmm2a(simu_folder, name2command[name], name, machine=multi_machine, queue=multi_queue, nodes=nodes, core=core, time=24, mem=16, path2batch=emp_folder + "/multigene/", path2run=multi_path2bayescode)
+        runmm2a(simu_folder, name2command[name], name, machine=multi_machine, queue=multi_queue, nodes=nodes, core=core, time=24, mem=16, path2batch=simu_folder + "/multigene/", path2run=multi_path2bayescode)
 
 
