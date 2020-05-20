@@ -44,8 +44,9 @@ def gene_codeml_fdr(cutoff_list, score, meanposw, trueposw, meanes, truees, gene
     nfalse = ngene - ntrue
 
     totnsite = sum([nsite for (gene,nsite) in gene_nsite.items()])
-    truetotes = sum([nsite*truees[gene] for (gene,nsite) in gene_nsite.items()])
-    truetotpos = sum([nsite*trueposw[gene] for (gene,nsite) in gene_nsite.items()])
+    if fromsimu:
+        truetotes = sum([nsite*truees[gene] for (gene,nsite) in gene_nsite.items()])
+        truetotpos = sum([nsite*trueposw[gene] for (gene,nsite) in gene_nsite.items()])
 
     with open(outname + "_codeml.genefdr", 'w') as outfile:
 
@@ -145,9 +146,10 @@ def gene_bayes_fdr(cutoff_list, score, meanposw, trueposw, meanes, truees, gene_
 
     totnsite = sum([nsite for (gene,nsite) in gene_nsite.items()])
     totes = sum([nsite*meanes[gene] for (gene,nsite) in gene_nsite.items()])
-    truetotes = sum([nsite*truees[gene] for (gene,nsite) in gene_nsite.items()])
     totpos = sum([nsite*meanposw[gene] for (gene,nsite) in gene_nsite.items()])
-    truetotpos = sum([nsite*trueposw[gene] for (gene,nsite) in gene_nsite.items()])
+    if fromsimu:
+        truetotes = sum([nsite*truees[gene] for (gene,nsite) in gene_nsite.items()])
+        truetotpos = sum([nsite*trueposw[gene] for (gene,nsite) in gene_nsite.items()])
 
     gene_ndisc = dict()
     gene_fdr = dict()

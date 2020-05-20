@@ -55,13 +55,18 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
 
     # get true param values (if from simu)
     # and calculate empirical means and variances from these true values
+    trueposw = dict()
+    truedposom = dict()
     if fromsimu:
         print("data are from simulation, getting true param values..")
         [truepurw, trueposw, truepurom, truedposom, truesiteom, truepos2] = simuparams.get_true_params(exp_folder)
         (pi, purw_mean, purw_var, purw_invconc, posw_mean, posw_var, posw_invconc, purom_mean, purom_var, purom_invconc, dposom_mean, dposom_var, dposom_invshape) = simuparams.get_empirical_hyperparams(truepurw, trueposw, truepurom, truedposom)
 
-    truees = trueposw
+    # truees = dict()
     # truees = {gene : trueposw[gene]*dposom for (gene,dposom) in truedposom.items()}
+    truees = trueposw
+
+    print("number of pos sel genes", len([posw for (gene,posw) in trueposw.items() if posw > 0]))
 
     # for each method (codeml, m2a, mm2a, under any prior or settings)
     # and for all genes
@@ -376,11 +381,13 @@ def m2a_postanalysis(exp_folder, single_basename, multi_basename, outname = "m2a
         #    outfile.write("{0:10s}\t{1:6.4f}\t{2:6.4f}\t{3:6.4f}\t{4:6.4f}\t{5:6.4f}\n".format(name, est_pi, est_posw_mean, numpy.sqrt(est_posw_var), est_posom_mean, numpy.sqrt(est_posom_var)))
 
     print("gene-level fdr")
-    truepos = dict()
+    true_posw = dict()
+    true_es = dict()
     if fromsimu:
-        truepos = trueposw
+        true_posw = trueposw
+        true_es = truees
 
-    return method_gene_fdr(cutoff_list, namelist, score, posw, trueposw, meanes, truees, gene_nsite, outname)
+    return method_gene_fdr(cutoff_list, namelist, score, posw, true_posw, meanes, true_es, gene_nsite, outname)
 
 
 def full_m2a_postanalysis(exp_folder, simu_list, single_basename, multi_basename, outname, single_burnin = 100, multi_burnin = 500, with_sites = False, fdr_cutoff_list = default_cutoff_list, fields = ["ndisc", "fdr", "e-fnr", "fnr"]):
